@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>InvoiceTrack — Rechnungsverwaltung</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f0e8;
+  --bg2: #ede8df;
+  --bg3: #e4ddd2;
+  --border: #d4cdc0;
+  --border2: #c8c0b0;
+  --text: #1a1814;
+  --text2: #5a5248;
+  --text3: #9a9088;
+  --accent: #2c4a2e;
+  --accent2: #3d6b40;
+  --accent-light: rgba(44,74,46,0.08);
+  --red: #8b2020;
+  --red-bg: rgba(139,32,32,0.07);
+  --red-border: rgba(139,32,32,0.2);
+  --yellow: #7a5c00;
+  --yellow-bg: rgba(122,92,0,0.07);
+  --yellow-border: rgba(122,92,0,0.2);
+  --green: #2c4a2e;
+  --green-bg: rgba(44,74,46,0.07);
+  --green-border: rgba(44,74,46,0.2);
+  --blue: #1a3a5c;
+  --blue-bg: rgba(26,58,92,0.07);
+  --radius: 8px;
+  --radius-sm: 4px;
+  --font-display: 'Playfair Display', serif;
+  --font-mono: 'DM Mono', monospace;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  min-height: 100dvh;
+}
+
+/* ── LOGIN ── */
+#login-screen {
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2rem;
+  background: var(--bg);
+}
+.login-logo {
+  font-family: var(--font-display);
+  font-size: 48px; font-weight: 900;
+  color: var(--accent); letter-spacing: -2px;
+  margin-bottom: 4px;
+}
+.login-sub { font-size: 11px; color: var(--text3); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 3rem; }
+.login-card {
+  background: #fff; border: 0.5px solid var(--border);
+  border-radius: var(--radius); padding: 2rem;
+  width: 100%; max-width: 360px;
+  box-shadow: var(--shadow-md);
+}
+.login-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: .5rem; }
+.login-desc { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 1.5rem; }
+.btn-google {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 11px;
+  background: var(--bg); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--font-mono); font-size: 13px; cursor: pointer;
+  transition: all .15s;
+}
+.btn-google:hover { background: var(--bg2); border-color: var(--accent); }
+.field-row { margin-bottom: 1rem; }
+.field-row label { display: block; font-size: 10px; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .35rem; }
+.field-row input {
+  width: 100%; padding: 8px 10px;
+  background: var(--bg); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--font-mono); font-size: 12px;
+}
+.field-row input:focus { outline: none; border-color: var(--accent); }
+.field-hint { font-size: 10px; color: var(--text3); margin-top: .3rem; }
+
+/* ── APP ── */
+#app { display: none; flex-direction: column; min-height: 100dvh; }
+
+.header {
+  background: #fff; border-bottom: 0.5px solid var(--border);
+  padding: .75rem 1.25rem;
+  display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: var(--shadow);
+}
+.header-logo { font-family: var(--font-display); font-weight: 900; font-size: 20px; color: var(--accent); letter-spacing: -1px; flex: 1; }
+.header-user { display: flex; align-items: center; gap: 8px; }
+.header-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border2); }
+.header-name { font-size: 11px; color: var(--text2); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-logout { background: none; border: 0.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text3); font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; cursor: pointer; }
+.btn-logout:hover { color: var(--red); border-color: var(--red); }
+
+.tabs { display: flex; background: #fff; border-bottom: 0.5px solid var(--border); position: sticky; top: 53px; z-index: 99; }
+.tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.main { flex: 1; padding: 1.25rem; max-width: 900px; margin: 0 auto; width: 100%; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* CARDS */
+.card { background: #fff; border: 0.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: .75rem; overflow: hidden; }
+.card-header { padding: .875rem 1.125rem; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.card-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; flex: 1; }
+.card-body { padding: 1rem 1.125rem; }
+
+/* STATUS PILLS */
+.status-pill { font-size: 10px; font-weight: 500; padding: 3px 9px; border-radius: 20px; letter-spacing: .04em; white-space: nowrap; flex-shrink: 0; }
+.pill-offen    { background: var(--blue-bg);   color: var(--blue);   border: 0.5px solid rgba(26,58,92,0.2); }
+.pill-erinnerung { background: var(--yellow-bg); color: var(--yellow); border: 0.5px solid var(--yellow-border); }
+.pill-mahnung  { background: var(--red-bg);    color: var(--red);    border: 0.5px solid var(--red-border); }
+.pill-bezahlt  { background: var(--green-bg);  color: var(--green);  border: 0.5px solid var(--green-border); }
+.pill-angebot  { background: rgba(100,80,160,0.07); color: #4a3080; border: 0.5px solid rgba(100,80,160,0.2); }
+
+/* INVOICE ROWS */
+.inv-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: .75rem 1.125rem; border-bottom: 0.5px solid var(--border);
+  transition: background .1s;
+}
+.inv-row:last-child { border-bottom: none; }
+.inv-row:hover { background: var(--bg); }
+.inv-row.urgent { border-left: 3px solid var(--red); }
+.inv-row.warn   { border-left: 3px solid var(--yellow); }
+.inv-meta { flex: 1; min-width: 0; }
+.inv-nr   { font-size: 11px; color: var(--text3); }
+.inv-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inv-dates { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.inv-betrag { font-family: var(--font-mono); font-size: 13px; font-weight: 500; white-space: nowrap; color: var(--accent); }
+.inv-actions { display: flex; gap: 5px; flex-shrink: 0; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: #fff; color: var(--text); font-family: var(--font-mono); font-size: 12px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.btn:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
+.btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
+.btn.primary:hover { background: var(--accent2); }
+.btn.danger { border-color: var(--red-border); color: var(--red); }
+.btn.danger:hover { background: var(--red-bg); }
+.btn-sm { padding: 4px 9px; font-size: 11px; }
+.btn:disabled { opacity: .4; cursor: default; }
+
+/* FORM */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+.form-field { display: flex; flex-direction: column; gap: 4px; }
+.form-field.full { grid-column: 1 / -1; }
+.form-field label { font-size: 10px; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; }
+.form-field input, .form-field select, .form-field textarea {
+  padding: 8px 10px; background: var(--bg);
+  border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+  color: var(--text); font-family: var(--font-mono); font-size: 12px;
+}
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+.form-field textarea { resize: vertical; min-height: 60px; }
+
+/* STATUS BAR */
+.status-bar { display: flex; align-items: center; gap: 8px; padding: .65rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 12px; }
+.status-bar.info    { background: var(--blue-bg);   color: var(--blue);   border: 0.5px solid rgba(26,58,92,0.15); }
+.status-bar.success { background: var(--green-bg);  color: var(--green);  border: 0.5px solid var(--green-border); }
+.status-bar.warn    { background: var(--yellow-bg); color: var(--yellow); border: 0.5px solid var(--yellow-border); }
+.status-bar.err     { background: var(--red-bg);    color: var(--red);    border: 0.5px solid var(--red-border); }
+.spinner { display: inline-block; width: 12px; height: 12px; border: 1.5px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* SECTION LABEL */
+.section-label { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--text3); margin: 1.25rem 0 .6rem; }
+.section-label:first-child { margin-top: 0; }
+
+/* SUMMARY BOXES */
+.summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin-bottom: 1.25rem; }
+@media (min-width: 600px) { .summary-grid { grid-template-columns: repeat(4, 1fr); } }
+.summary-box { background: #fff; border: 0.5px solid var(--border); border-radius: var(--radius); padding: .875rem 1rem; box-shadow: var(--shadow); }
+.summary-box .label { font-size: 10px; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .35rem; }
+.summary-box .value { font-family: var(--font-display); font-size: 22px; font-weight: 700; }
+.summary-box .value.red    { color: var(--red); }
+.summary-box .value.yellow { color: var(--yellow); }
+.summary-box .value.green  { color: var(--green); }
+.summary-box .value.blue   { color: var(--blue); }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(2px); }
+.modal { background: #fff; border-radius: var(--radius); width: 100%; max-width: 520px; box-shadow: var(--shadow-md); max-height: 90dvh; overflow-y: auto; }
+.modal-header { padding: 1.125rem 1.25rem; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.modal-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; flex: 1; }
+.modal-body { padding: 1.25rem; }
+.modal-footer { padding: .875rem 1.25rem; border-top: 0.5px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--text3); }
+.empty-icon { font-size: 40px; margin-bottom: 1rem; display: block; opacity: .5; }
+
+/* TOP BAR */
+.top-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.top-bar h2 { font-family: var(--font-display); font-size: 22px; font-weight: 700; flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">InvoiceTrack</div>
+  <div class="login-sub">Rechnungsverwaltung · MAKE A TEAM</div>
+  <div class="login-card">
+    <div class="login-title">Anmelden</div>
+    <div class="login-desc">Melde dich mit deinem Google-Konto an um Angebote und Rechnungen zu verwalten.</div>
+    <div class="field-row">
+      <label>Google Spreadsheet ID</label>
+      <input type="text" id="login-sheet-id" placeholder="1zYY_O1y...">
+      <div class="field-hint">ID aus der Google Sheets URL. Leer lassen = neues Sheet wird erstellt.</div>
+    </div>
+    <button class="btn-google" onclick="startLogin()">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Mit Google anmelden
+    </button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <div class="header-logo">InvoiceTrack</div>
+    <div class="header-user">
+      <img id="user-avatar" class="header-avatar" src="" alt="">
+      <span id="user-name" class="header-name"></span>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('dashboard')">📊 Dashboard</div>
+    <div class="tab" onclick="showTab('rechnungen')">📄 Rechnungen</div>
+    <div class="tab" onclick="showTab('angebote')">💼 Angebote</div>
+    <div class="tab" onclick="showTab('mahnwesen')">🔔 Mahnwesen</div>
+    <div class="tab" onclick="showTab('settings')">⚙️ Setup</div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="panel-dashboard" class="panel active">
+      <div id="dash-status"></div>
+      <div class="summary-grid">
+        <div class="summary-box"><div class="label">Offen</div><div class="value blue" id="sum-offen">–</div></div>
+        <div class="summary-box"><div class="label">Überfällig</div><div class="value red" id="sum-ueberfaellig">–</div></div>
+        <div class="summary-box"><div class="label">Erinnerung</div><div class="value yellow" id="sum-erinnerung">–</div></div>
+        <div class="summary-box"><div class="label">Mahnung</div><div class="value red" id="sum-mahnung">–</div></div>
+      </div>
+      <div class="top-bar">
+        <h2>Aktionsbedarf</h2>
+        <button class="btn primary" onclick="loadAll()">🔄 Aktualisieren</button>
+      </div>
+      <div id="dash-list"><div class="empty-state"><span class="empty-icon">📊</span><p>Klicke Aktualisieren um den Status zu laden.</p></div></div>
+    </div>
+
+    <!-- RECHNUNGEN -->
+    <div id="panel-rechnungen" class="panel">
+      <div id="inv-status"></div>
+      <div class="top-bar">
+        <h2>Rechnungen</h2>
+        <button class="btn" onclick="loadAll()">🔄</button>
+        <button class="btn primary" onclick="openModal('new-rechnung')">+ Neue Rechnung</button>
+      </div>
+      <div id="filter-bar" style="display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap">
+        <button class="btn btn-sm active-filter" onclick="filterInv('')" id="f-all">Alle</button>
+        <button class="btn btn-sm" onclick="filterInv('Offen')" id="f-offen">Offen</button>
+        <button class="btn btn-sm" onclick="filterInv('Erinnerung')" id="f-erin">Erinnerung</button>
+        <button class="btn btn-sm" onclick="filterInv('Mahnung')" id="f-mahn">Mahnung</button>
+        <button class="btn btn-sm" onclick="filterInv('Bezahlt')" id="f-bezahlt">Bezahlt</button>
+      </div>
+      <div id="inv-list"><div class="empty-state"><span class="empty-icon">📄</span><p>Keine Rechnungen geladen.</p></div></div>
+    </div>
+
+    <!-- ANGEBOTE -->
+    <div id="panel-angebote" class="panel">
+      <div id="ang-status"></div>
+      <div class="top-bar">
+        <h2>Angebote</h2>
+        <button class="btn" onclick="loadAll()">🔄</button>
+        <button class="btn primary" onclick="openModal('new-angebot')">+ Neues Angebot</button>
+      </div>
+      <div id="ang-list"><div class="empty-state"><span class="empty-icon">💼</span><p>Keine Angebote geladen.</p></div></div>
+    </div>
+
+    <!-- MAHNWESEN -->
+    <div id="panel-mahnwesen" class="panel">
+      <div id="mahn-status"></div>
+      <div class="top-bar">
+        <h2>Mahnwesen</h2>
+        <button class="btn primary" onclick="runMahnCheck()">🔔 Mahnlauf starten</button>
+      </div>
+      <div id="mahn-summary" style="display:none"></div>
+      <div id="mahn-list"><div class="empty-state"><span class="empty-icon">🔔</span><p>Mahnlauf starten um fällige Rechnungen zu prüfen.</p></div></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="panel-settings" class="panel">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Google Sheet</div></div>
+        <div class="card-body">
+          <div class="form-field" style="margin-bottom:.75rem">
+            <label>Spreadsheet ID</label>
+            <input type="text" id="set-sheet-id" placeholder="1zYY_O1y...">
+          </div>
+          <div id="sheet-link" style="font-size:12px;color:var(--text2);margin-bottom:.75rem"></div>
+          <button class="btn primary" onclick="saveSettings()">💾 Speichern</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Mahnfristen</div></div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Erinnerung nach (Tage nach Fälligkeit)</label>
+              <input type="number" id="set-days-erin" value="7" min="1">
+            </div>
+            <div class="form-field">
+              <label>Mahnung nach (Tage nach Erinnerung)</label>
+              <input type="number" id="set-days-mahn" value="21" min="1">
+            </div>
+          </div>
+          <button class="btn primary" style="margin-top:.75rem" onclick="saveSettings()">💾 Speichern</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="modal-container" style="display:none">
+
+  <!-- New Rechnung / Angebot -->
+  <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title">Neue Rechnung</div>
+        <button class="btn btn-sm" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="modal-status"></div>
+        <div class="form-grid">
+          <div class="form-field full">
+            <label>Typ</label>
+            <select id="f-typ">
+              <option value="Rechnung">Rechnung</option>
+              <option value="Angebot">Angebot</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Nummer</label>
+            <input type="text" id="f-nr" placeholder="2025-001">
+          </div>
+          <div class="form-field">
+            <label>Datum</label>
+            <input type="date" id="f-datum">
+          </div>
+          <div class="form-field full">
+            <label>Kunde / Empfänger</label>
+            <input type="text" id="f-kunde" placeholder="Firmenname oder Name">
+          </div>
+          <div class="form-field full">
+            <label>Beschreibung</label>
+            <textarea id="f-beschreibung" placeholder="Leistungsbeschreibung"></textarea>
+          </div>
+          <div class="form-field">
+            <label>Betrag brutto (€)</label>
+            <input type="number" id="f-betrag" step="0.01" placeholder="0.00">
+          </div>
+          <div class="form-field">
+            <label>Zahlungsziel (Tage)</label>
+            <input type="number" id="f-zahltage" value="14" min="1" placeholder="14">
+          </div>
+          <div class="form-field full">
+            <label>Notiz</label>
+            <input type="text" id="f-notiz" placeholder="Interne Notiz">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal()">Abbrechen</button>
+        <button class="btn primary" onclick="saveEntry()">💾 Speichern</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Edit Status Modal -->
+<div id="status-modal" style="display:none">
+  <div class="modal-overlay" onclick="if(event.target===this)closeStatusModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Status ändern</div>
+        <button class="btn btn-sm" onclick="closeStatusModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="status-modal-info" style="font-size:13px;margin-bottom:1rem;color:var(--text2)"></div>
+        <div class="form-grid">
+          <div class="form-field full">
+            <label>Neuer Status</label>
+            <select id="sm-status">
+              <option value="Offen">Offen</option>
+              <option value="Erinnerung">Erinnerung gesendet</option>
+              <option value="Mahnung">Mahnung gesendet</option>
+              <option value="Bezahlt">Bezahlt</option>
+              <option value="Storniert">Storniert</option>
+            </select>
+          </div>
+          <div class="form-field full">
+            <label>Zahlungsdatum (bei Bezahlt)</label>
+            <input type="date" id="sm-zahldatum">
+          </div>
+          <div class="form-field full">
+            <label>Notiz</label>
+            <input type="text" id="sm-notiz" placeholder="z.B. Zahlung eingegangen">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeStatusModal()">Abbrechen</button>
+        <button class="btn primary" onclick="saveStatus()">✓ Status setzen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// ── CONFIG ──
+const GOOGLE_CLIENT_ID = '153450666140-bu77o2i7lkdb0racjdabk0ep8v2ps492.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets openid email profile';
+const SHEET_NAME = 'Rechnungen';
+
+// ── STATE ──
+let accessToken = null;
+let userInfo = null;
+let entries = [];
+let editingRow = null;
+
+// ── SETTINGS ──
+function gs(k,d){ return localStorage.getItem('invtrack_'+k)||d; }
+function ss(k,v){ localStorage.setItem('invtrack_'+k,v); }
+function getSheetId(){ return gs('sheetId',''); }
+function getDaysErin(){ return parseInt(gs('daysErin','7')); }
+function getDaysMahn(){ return parseInt(gs('daysMahn','21')); }
+
+// ── UTILS ──
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function addDays(dateStr, n){
+  const d = new Date(dateStr); d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function daysDiff(from, to){
+  return Math.round((new Date(to)-new Date(from))/(1000*60*60*24));
+}
+function toDE(dateStr){
+  if(!dateStr) return '';
+  const [y,m,d] = dateStr.split('-');
+  return d&&m&&y ? d+'.'+m+'.'+y : dateStr;
+}
+function fmtBetrag(n){
+  return Number(n||0).toLocaleString('de-AT',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function statusPill(s){
+  const map = {Offen:'pill-offen',Erinnerung:'pill-erinnerung',Mahnung:'pill-mahnung',Bezahlt:'pill-bezahlt',Angebot:'pill-angebot',Storniert:'pill-offen'};
+  return `<span class="status-pill ${map[s]||'pill-offen'}">${esc(s)}</span>`;
+}
+function computeStatus(e){
+  if(e.status==='Bezahlt'||e.status==='Storniert'||e.typ==='Angebot') return e.status;
+  const t = today();
+  if(!e.faellig) return e.status||'Offen';
+  const overdue = daysDiff(e.faellig, t);
+  if(overdue >= getDaysErin()+getDaysMahn()) return 'Mahnung';
+  if(overdue >= getDaysErin()) return 'Erinnerung';
+  return 'Offen';
+}
+
+// ── LOGIN ──
+function startLogin(){
+  const sheetId = document.getElementById('login-sheet-id').value.trim();
+  if(sheetId) ss('sheetId', sheetId);
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: SCOPES,
+    callback: async(resp) => {
+      if(resp.error){ alert('Login fehlgeschlagen: '+resp.error); return; }
+      accessToken = resp.access_token;
+      const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+accessToken}});
+      userInfo = await r.json();
+      showApp();
+    }
+  });
+  client.requestAccessToken();
+}
+
+function showApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('user-name').textContent = userInfo?.name||userInfo?.email||'';
+  const av = document.getElementById('user-avatar');
+  if(userInfo?.picture) av.src=userInfo.picture; else av.style.display='none';
+  document.getElementById('set-sheet-id').value = getSheetId();
+  document.getElementById('set-days-erin').value = getDaysErin();
+  document.getElementById('set-days-mahn').value = getDaysMahn();
+  if(getSheetId()) updateSheetLink();
+  loadAll();
+}
+
+function logout(){
+  accessToken=null; userInfo=null; entries=[];
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ── TABS ──
+function showTab(tab){
+  const tabs=['dashboard','rechnungen','angebote','mahnwesen','settings'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+// ── SHEET SETUP ──
+async function ensureSheet(){
+  const sheetId = getSheetId();
+  if(!sheetId) return;
+  // Check if Rechnungen sheet exists, if not create headers
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:N1')}`;
+  const r = await fetch(url,{headers:{Authorization:'Bearer '+accessToken}});
+  const data = await r.json();
+  if(!data.values||!data.values[0]||!data.values[0][0]){
+    // Write headers
+    const headers = [['ID','Typ','Nummer','Datum','Fällig','Kunde','Beschreibung','Betrag','Status','Zahlungsdatum','Notiz','Erstellt','Geändert','Zahlungstage']];
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:N1')}?valueInputOption=RAW`,{
+      method:'PUT', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+      body: JSON.stringify({values:headers})
+    });
+  }
+}
+
+// ── LOAD ALL ──
+async function loadAll(){
+  const sheetId = getSheetId();
+  if(!sheetId){ showSt('dash-status','⚠ Bitte zuerst Spreadsheet ID in Setup eintragen','warn'); return; }
+  showSt('dash-status','<span class="spinner"></span> Daten werden geladen...','info');
+  try{
+    await ensureSheet();
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A2:N500')}?valueRenderOption=UNFORMATTED_VALUE`;
+    const r = await fetch(url,{headers:{Authorization:'Bearer '+accessToken}});
+    const data = await r.json();
+    const rows = (data.values||[]).filter(r=>r.some(c=>c!==''&&c!==undefined));
+    entries = rows.map(r=>({
+      id: r[0]||'', typ: r[1]||'Rechnung', nr: r[2]||'', datum: r[3]||'',
+      faellig: r[4]||'', kunde: r[5]||'', beschreibung: r[6]||'',
+      betrag: parseFloat(r[7])||0, status: r[8]||'Offen',
+      zahldatum: r[9]||'', notiz: r[10]||'', erstellt: r[11]||'',
+      geaendert: r[12]||'', zahltage: parseInt(r[13])||14
+    }));
+    document.getElementById('dash-status').innerHTML='';
+    renderAll();
+  }catch(e){
+    showSt('dash-status','⚠ Fehler: '+e.message,'err');
+  }
+}
+
+function renderAll(){
+  renderDashboard();
+  renderRechnungen();
+  renderAngebote();
+}
+
+// ── DASHBOARD ──
+function renderDashboard(){
+  const t = today();
+  const rechnungen = entries.filter(e=>e.typ==='Rechnung'&&e.status!=='Bezahlt'&&e.status!=='Storniert');
+  const ueberfaellig = rechnungen.filter(e=>e.faellig&&e.faellig<t);
+  const erin = rechnungen.filter(e=>{
+    const ov = daysDiff(e.faellig,t);
+    return e.faellig && ov>=getDaysErin() && ov<getDaysErin()+getDaysMahn();
+  });
+  const mahn = rechnungen.filter(e=>e.faellig&&daysDiff(e.faellig,t)>=getDaysErin()+getDaysMahn());
+
+  document.getElementById('sum-offen').textContent = rechnungen.length;
+  document.getElementById('sum-ueberfaellig').textContent = ueberfaellig.length;
+  document.getElementById('sum-erinnerung').textContent = erin.length;
+  document.getElementById('sum-mahnung').textContent = mahn.length;
+
+  const actionNeeded = entries.filter(e=>{
+    if(e.typ!=='Rechnung') return false;
+    const cs = computeStatus(e);
+    return cs==='Erinnerung'||cs==='Mahnung';
+  }).sort((a,b)=>a.faellig>b.faellig?1:-1);
+
+  const list = document.getElementById('dash-list');
+  if(!actionNeeded.length){
+    list.innerHTML='<div class="empty-state"><span class="empty-icon">✅</span><p>Kein Aktionsbedarf — alle Rechnungen sind im grünen Bereich.</p></div>';
+    return;
+  }
+  list.innerHTML = '<div class="card">'+actionNeeded.map(e=>invRow(e,true)).join('')+'</div>';
+}
+
+// ── RECHNUNGEN ──
+let currentFilter = '';
+function filterInv(f){
+  currentFilter = f;
+  document.querySelectorAll('#filter-bar .btn').forEach(b=>b.style.fontWeight='');
+  const map={'':'f-all','Offen':'f-offen','Erinnerung':'f-erin','Mahnung':'f-mahn','Bezahlt':'f-bezahlt'};
+  if(map[f]) document.getElementById(map[f]).style.fontWeight='600';
+  renderRechnungen();
+}
+
+function renderRechnungen(){
+  let list = entries.filter(e=>e.typ==='Rechnung');
+  if(currentFilter) list = list.filter(e=>{
+    const cs = computeStatus(e);
+    return cs===currentFilter || e.status===currentFilter;
+  });
+  list.sort((a,b)=>b.datum.localeCompare(a.datum));
+  const el = document.getElementById('inv-list');
+  if(!list.length){ el.innerHTML='<div class="empty-state"><span class="empty-icon">📄</span><p>Keine Rechnungen gefunden.</p></div>'; return; }
+  el.innerHTML='<div class="card">'+list.map(e=>invRow(e,false)).join('')+'</div>';
+}
+
+function renderAngebote(){
+  const list = entries.filter(e=>e.typ==='Angebot').sort((a,b)=>b.datum.localeCompare(a.datum));
+  const el = document.getElementById('ang-list');
+  if(!list.length){ el.innerHTML='<div class="empty-state"><span class="empty-icon">💼</span><p>Keine Angebote gefunden.</p></div>'; return; }
+  el.innerHTML='<div class="card">'+list.map(e=>invRow(e,false)).join('')+'</div>';
+}
+
+function invRow(e, showUrgency){
+  const cs = computeStatus(e);
+  const overdueDays = e.faellig ? daysDiff(e.faellig, today()) : 0;
+  let urgencyClass = '';
+  if(showUrgency && cs==='Mahnung') urgencyClass='urgent';
+  else if(showUrgency && cs==='Erinnerung') urgencyClass='warn';
+
+  let dateInfo = `Re-Datum: ${toDE(e.datum)}`;
+  if(e.faellig && e.typ==='Rechnung') dateInfo += ` · Fällig: ${toDE(e.faellig)}`;
+  if(e.typ==='Rechnung' && e.status!=='Bezahlt' && overdueDays>0) dateInfo += ` · <span style="color:var(--red)">${overdueDays} Tage überfällig</span>`;
+  if(e.zahldatum) dateInfo += ` · Bezahlt: ${toDE(e.zahldatum)}`;
+
+  return `<div class="inv-row ${urgencyClass}">
+    <div class="inv-meta">
+      <div class="inv-nr">${esc(e.nr)} · ${esc(e.kunde)}</div>
+      <div class="inv-name">${esc(e.beschreibung)}</div>
+      <div class="inv-dates">${dateInfo}</div>
+    </div>
+    ${statusPill(cs)}
+    <div class="inv-betrag">€ ${fmtBetrag(e.betrag)}</div>
+    <div class="inv-actions">
+      ${e.typ==='Angebot'?`<button class="btn btn-sm" onclick="convertToRechnung('${e.id}')">→ Rechnung</button>`:''}
+      <button class="btn btn-sm" onclick="openStatusModal('${e.id}')">Status</button>
+    </div>
+  </div>`;
+}
+
+// ── MAHNWESEN ──
+function runMahnCheck(){
+  const t = today();
+  const toErin = entries.filter(e=>{
+    if(e.typ!=='Rechnung'||e.status==='Bezahlt'||e.status==='Storniert') return false;
+    const ov = daysDiff(e.faellig, t);
+    return ov>=getDaysErin() && ov<getDaysErin()+getDaysMahn();
+  });
+  const toMahn = entries.filter(e=>{
+    if(e.typ!=='Rechnung'||e.status==='Bezahlt'||e.status==='Storniert') return false;
+    return daysDiff(e.faellig, t)>=getDaysErin()+getDaysMahn();
+  });
+
+  const sum = document.getElementById('mahn-summary');
+  sum.style.display='';
+  const total = toErin.length+toMahn.length;
+  if(!total){
+    sum.innerHTML='<div class="status-bar success">✓ Kein Mahnbedarf — alle offenen Rechnungen sind innerhalb der Fristen.</div>';
+    document.getElementById('mahn-list').innerHTML='';
+    return;
+  }
+  sum.innerHTML=`<div class="status-bar warn">🔔 ${toMahn.length} Mahnung(en) und ${toErin.length} Erinnerung(en) fällig.</div>`;
+
+  let html = '';
+  if(toMahn.length){
+    html += '<div class="section-label">🔴 Mahnung erforderlich</div><div class="card">';
+    html += toMahn.map(e=>`<div class="inv-row urgent">
+      <div class="inv-meta">
+        <div class="inv-nr">${esc(e.nr)} · ${esc(e.kunde)}</div>
+        <div class="inv-name">${esc(e.beschreibung)}</div>
+        <div class="inv-dates">Fällig: ${toDE(e.faellig)} · ${daysDiff(e.faellig,t)} Tage überfällig</div>
+      </div>
+      <div class="inv-betrag">€ ${fmtBetrag(e.betrag)}</div>
+      <div class="inv-actions">
+        <button class="btn btn-sm danger" onclick="openStatusModal('${e.id}')">Mahnung setzen</button>
+      </div>
+    </div>`).join('');
+    html += '</div>';
+  }
+  if(toErin.length){
+    html += '<div class="section-label">🟡 Erinnerung erforderlich</div><div class="card">';
+    html += toErin.map(e=>`<div class="inv-row warn">
+      <div class="inv-meta">
+        <div class="inv-nr">${esc(e.nr)} · ${esc(e.kunde)}</div>
+        <div class="inv-name">${esc(e.beschreibung)}</div>
+        <div class="inv-dates">Fällig: ${toDE(e.faellig)} · ${daysDiff(e.faellig,t)} Tage überfällig</div>
+      </div>
+      <div class="inv-betrag">€ ${fmtBetrag(e.betrag)}</div>
+      <div class="inv-actions">
+        <button class="btn btn-sm" onclick="openStatusModal('${e.id}')">Erinnerung setzen</button>
+      </div>
+    </div>`).join('');
+    html += '</div>';
+  }
+  document.getElementById('mahn-list').innerHTML=html;
+}
+
+// ── MODAL ──
+let modalMode = '';
+function openModal(mode){
+  modalMode = mode;
+  document.getElementById('modal-container').style.display='';
+  document.getElementById('modal-status').innerHTML='';
+  const isAngebot = mode==='new-angebot';
+  document.getElementById('modal-title').textContent = isAngebot ? 'Neues Angebot' : 'Neue Rechnung';
+  document.getElementById('f-typ').value = isAngebot ? 'Angebot' : 'Rechnung';
+  document.getElementById('f-datum').value = today();
+  document.getElementById('f-nr').value = '';
+  document.getElementById('f-kunde').value = '';
+  document.getElementById('f-beschreibung').value = '';
+  document.getElementById('f-betrag').value = '';
+  document.getElementById('f-zahltage').value = '14';
+  document.getElementById('f-notiz').value = '';
+}
+function closeModal(){ document.getElementById('modal-container').style.display='none'; }
+
+async function saveEntry(){
+  const typ = document.getElementById('f-typ').value;
+  const nr = document.getElementById('f-nr').value.trim();
+  const datum = document.getElementById('f-datum').value;
+  const kunde = document.getElementById('f-kunde').value.trim();
+  const beschreibung = document.getElementById('f-beschreibung').value.trim();
+  const betrag = parseFloat(document.getElementById('f-betrag').value)||0;
+  const zahltage = parseInt(document.getElementById('f-zahltage').value)||14;
+  const notiz = document.getElementById('f-notiz').value.trim();
+
+  if(!kunde||!betrag){ showSt('modal-status','⚠ Kunde und Betrag sind Pflichtfelder','warn'); return; }
+
+  const id = Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const faellig = typ==='Rechnung' ? addDays(datum, zahltage) : '';
+  const now = today();
+  const row = [id, typ, nr, datum, faellig, kunde, beschreibung, betrag, 'Offen', '', notiz, now, now, zahltage];
+
+  showSt('modal-status','<span class="spinner"></span> Wird gespeichert...','info');
+  try{
+    const sheetId = getSheetId();
+    // Find next empty row
+    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A:A')}`;
+    const getR = await fetch(getUrl,{headers:{Authorization:'Bearer '+accessToken}});
+    const getData = await getR.json();
+    const nextRow = ((getData.values||[]).length)+1;
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A'+nextRow+':N'+nextRow)}?valueInputOption=RAW`,{
+      method:'PUT', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+      body: JSON.stringify({values:[row]})
+    });
+    closeModal();
+    await loadAll();
+  }catch(e){
+    showSt('modal-status','⚠ Fehler: '+e.message,'err');
+  }
+}
+
+// ── STATUS MODAL ──
+let statusEntryId = null;
+function openStatusModal(id){
+  statusEntryId = id;
+  const e = entries.find(x=>x.id===id); if(!e) return;
+  document.getElementById('status-modal').style.display='';
+  document.getElementById('status-modal-info').innerHTML = `<strong>${esc(e.nr)} — ${esc(e.kunde)}</strong><br>€ ${fmtBetrag(e.betrag)} · Fällig: ${toDE(e.faellig)}`;
+  document.getElementById('sm-status').value = e.status||'Offen';
+  document.getElementById('sm-zahldatum').value = e.zahldatum||'';
+  document.getElementById('sm-notiz').value = '';
+}
+function closeStatusModal(){ document.getElementById('status-modal').style.display='none'; }
+
+async function saveStatus(){
+  const e = entries.find(x=>x.id===statusEntryId); if(!e) return;
+  const newStatus = document.getElementById('sm-status').value;
+  const zahldatum = document.getElementById('sm-zahldatum').value;
+  const notiz = document.getElementById('sm-notiz').value;
+
+  try{
+    const sheetId = getSheetId();
+    // Find row in sheet
+    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A:A')}`;
+    const getR = await fetch(getUrl,{headers:{Authorization:'Bearer '+accessToken}});
+    const getData = await getR.json();
+    const rowIdx = (getData.values||[]).findIndex(r=>r[0]===statusEntryId);
+    if(rowIdx<0) throw new Error('Eintrag nicht gefunden');
+    const sheetRow = rowIdx+1;
+
+    const updates = [
+      {range:`${SHEET_NAME}!I${sheetRow}`, values:[[newStatus]]},
+      {range:`${SHEET_NAME}!J${sheetRow}`, values:[[zahldatum]]},
+      {range:`${SHEET_NAME}!K${sheetRow}`, values:[[notiz||e.notiz]]},
+      {range:`${SHEET_NAME}!M${sheetRow}`, values:[[today()]]},
+    ];
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
+      method:'POST', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+      body: JSON.stringify({valueInputOption:'RAW', data:updates})
+    });
+    closeStatusModal();
+    await loadAll();
+  }catch(e2){
+    alert('Fehler: '+e2.message);
+  }
+}
+
+// ── CONVERT ANGEBOT → RECHNUNG ──
+async function convertToRechnung(id){
+  if(!confirm('Angebot in Rechnung umwandeln?')) return;
+  const e = entries.find(x=>x.id===id); if(!e) return;
+  try{
+    const sheetId = getSheetId();
+    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A:A')}`;
+    const getR = await fetch(getUrl,{headers:{Authorization:'Bearer '+accessToken}});
+    const getData = await getR.json();
+    const rowIdx = (getData.values||[]).findIndex(r=>r[0]===id);
+    const sheetRow = rowIdx+1;
+    const faellig = addDays(today(), e.zahltage||14);
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
+      method:'POST', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+      body: JSON.stringify({valueInputOption:'RAW', data:[
+        {range:`${SHEET_NAME}!B${sheetRow}`, values:[['Rechnung']]},
+        {range:`${SHEET_NAME}!E${sheetRow}`, values:[[faellig]]},
+        {range:`${SHEET_NAME}!I${sheetRow}`, values:[['Offen']]},
+        {range:`${SHEET_NAME}!M${sheetRow}`, values:[[today()]]},
+      ]})
+    });
+    await loadAll();
+    showTab('rechnungen');
+  }catch(err){ alert('Fehler: '+err.message); }
+}
+
+// ── SETTINGS ──
+function saveSettings(){
+  ss('sheetId', document.getElementById('set-sheet-id').value.trim());
+  ss('daysErin', document.getElementById('set-days-erin').value);
+  ss('daysMahn', document.getElementById('set-days-mahn').value);
+  updateSheetLink();
+  alert('Einstellungen gespeichert.');
+}
+function updateSheetLink(){
+  const id = getSheetId();
+  document.getElementById('sheet-link').innerHTML = id ?
+    `<a href="https://docs.google.com/spreadsheets/d/${id}" target="_blank" style="color:var(--accent)">→ Sheet öffnen</a>` : '';
+}
+
+// ── STATUS HELPER ──
+function showSt(id, msg, type){
+  const el = document.getElementById(id); if(!el) return;
+  el.innerHTML = `<div class="status-bar ${type}">${msg}</div>`;
+}
+
+window.addEventListener('load',()=>{
+  const saved = gs('sheetId','');
+  if(saved) document.getElementById('login-sheet-id').value = saved;
+});
+</script>
+</body>
+</html>
