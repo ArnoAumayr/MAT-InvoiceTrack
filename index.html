@@ -542,15 +542,16 @@ async function ensureSheet(){
   if(!sheetId) return;
   // Check if Rechnungen sheet exists, if not create headers
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:N1')}`;
-  const r = await fetch(url,{headers:{Authorization:'Bearer '+accessToken}});
+  const r = await fetch(url, { headers: { 'Authorization': 'Bearer '+accessToken } });
+  if(!r.ok) return; // Sheet tab may not exist yet, will be created on first write
   const data = await r.json();
   if(!data.values||!data.values[0]||!data.values[0][0]){
-    // Write headers
     const headers = [['ID','Typ','Nummer','Datum','Fällig','Kunde','Beschreibung','Betrag','Status','Zahlungsdatum','Notiz','Erstellt','Geändert','Zahlungstage']];
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:N1')}?valueInputOption=RAW`,{
-      method:'PUT', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+    const wr = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:N1')}?valueInputOption=RAW`,{
+      method:'PUT', headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
       body: JSON.stringify({values:headers})
     });
+    if(!wr.ok) { const e=await wr.json(); console.error('Header write failed:',e); }
   }
 }
 
@@ -768,14 +769,24 @@ async function saveEntry(){
   try{
     const sheetId = getSheetId();
     // Find next empty row
+    if(!accessToken) throw new Error('Nicht angemeldet — bitte neu einloggen');
+    if(!sheetId) throw new Error('Keine Spreadsheet ID konfiguriert');
+
     const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A:A')}`;
-    const getR = await fetch(getUrl,{headers:{Authorization:'Bearer '+accessToken}});
+    const getR = await fetch(getUrl, {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer '+accessToken }
+    });
+    if(!getR.ok) { const e=await getR.json(); throw new Error('Sheet lesen: '+e.error?.message); }
     const getData = await getR.json();
     const nextRow = ((getData.values||[]).length)+1;
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A'+nextRow+':N'+nextRow)}?valueInputOption=RAW`,{
-      method:'PUT', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+
+    const writeR = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A'+nextRow+':N'+nextRow)}?valueInputOption=RAW`,{
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer '+accessToken, 'Content-Type': 'application/json' },
       body: JSON.stringify({values:[row]})
     });
+    if(!writeR.ok) { const e=await writeR.json(); throw new Error('Sheet schreiben: '+e.error?.message); }
     closeModal();
     await loadAll();
   }catch(e){
