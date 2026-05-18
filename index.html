@@ -470,9 +470,36 @@ function daysDiff(from, to){
   return Math.round((new Date(to)-new Date(from))/(1000*60*60*24));
 }
 function toDE(dateStr){
-  if(!dateStr) return '';
-  const [y,m,d] = dateStr.split('-');
-  return d&&m&&y ? d+'.'+m+'.'+y : dateStr;
+  if(!dateStr && dateStr!==0) return '';
+  // Google Sheets serial number (days since 1899-12-30)
+  if(typeof dateStr === 'number') {
+    const d = new Date((dateStr - 25569) * 86400 * 1000);
+    const dd = String(d.getUTCDate()).padStart(2,'0');
+    const mm = String(d.getUTCMonth()+1).padStart(2,'0');
+    const yyyy = d.getUTCFullYear();
+    return dd+'.'+mm+'.'+yyyy;
+  }
+  const s = String(dateStr).trim();
+  if(!s) return '';
+  if(s.includes('-')) {
+    const [y,m,d] = s.split('-');
+    return d&&m&&y ? d+'.'+m+'.'+y : s;
+  }
+  return s;
+}
+
+function toISO(dateStr){
+  if(!dateStr && dateStr!==0) return '';
+  if(typeof dateStr === 'number') {
+    const d = new Date((dateStr - 25569) * 86400 * 1000);
+    return d.toISOString().slice(0,10);
+  }
+  const s = String(dateStr).trim();
+  if(s.includes('.')) {
+    const [d,m,y] = s.split('.');
+    return y&&m&&d ? y+'-'+m.padStart(2,'0')+'-'+d.padStart(2,'0') : s;
+  }
+  return s;
 }
 function fmtBetrag(n){
   return Number(n||0).toLocaleString('de-AT',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -557,11 +584,11 @@ async function loadAll(){
     const rows = (data.values||[]).filter(r=>r[0]&&r[0]!=='ID'&&r.some(c=>c!==''&&c!==undefined));
     console.log('Rows found:', rows.length);
     entries = rows.map(r=>({
-      id: r[0]||'', typ: r[1]||'Rechnung', nr: r[2]||'', datum: r[3]||'',
-      faellig: r[4]||'', kunde: r[5]||'', beschreibung: r[6]||'',
+      id: r[0]||'', typ: r[1]||'Rechnung', nr: r[2]||'', datum: toISO(r[3]),
+      faellig: toISO(r[4]), kunde: r[5]||'', beschreibung: r[6]||'',
       betrag: parseFloat(r[7])||0, status: r[8]||'Offen',
-      zahldatum: r[9]||'', notiz: r[10]||'', erstellt: r[11]||'',
-      geaendert: r[12]||'', zahltage: parseInt(r[13])||14
+      zahldatum: toISO(r[9]), notiz: r[10]||'', erstellt: toISO(r[11]),
+      geaendert: toISO(r[12]), zahltage: parseInt(r[13])||14
     }));
     document.getElementById('dash-status').innerHTML='';
     renderAll();
