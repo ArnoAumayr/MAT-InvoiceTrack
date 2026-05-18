@@ -649,14 +649,14 @@ function renderRechnungen(){
     const cs = computeStatus(e);
     return cs===currentFilter || e.status===currentFilter;
   });
-  list.sort((a,b)=>b.datum.localeCompare(a.datum));
+  list.sort((a,b)=>String(b.nr).localeCompare(String(a.nr), undefined, {numeric:true}));
   const el = document.getElementById('inv-list');
   if(!list.length){ el.innerHTML='<div class="empty-state"><span class="empty-icon">📄</span><p>Keine Rechnungen gefunden.</p></div>'; return; }
   el.innerHTML='<div class="card">'+list.map(e=>invRow(e,false)).join('')+'</div>';
 }
 
 function renderAngebote(){
-  const list = entries.filter(e=>e.typ==='Angebot').sort((a,b)=>b.datum.localeCompare(a.datum));
+  const list = entries.filter(e=>e.typ==='Angebot').sort((a,b)=>String(b.nr).localeCompare(String(a.nr), undefined, {numeric:true}));
   const el = document.getElementById('ang-list');
   if(!list.length){ el.innerHTML='<div class="empty-state"><span class="empty-icon">💼</span><p>Keine Angebote gefunden.</p></div>'; return; }
   el.innerHTML='<div class="card">'+list.map(e=>invRow(e,false)).join('')+'</div>';
@@ -841,7 +841,12 @@ async function saveStatus(){
     const getData = await getR.json();
     const allIds = (getData.values||[]).map(r=>String(r[0]||'').trim());
     const searchId = String(statusEntryId).trim();
-    const rowIdx = allIds.findIndex(id => id === searchId);
+    // Compare as string AND as number (handles "001" vs "1" etc.)
+    const rowIdx = allIds.findIndex(id => 
+      id === searchId || 
+      Number(id) === Number(searchId) ||
+      id.replace(/^0+/,'') === searchId.replace(/^0+/,'')
+    );
     console.log('Looking for ID:', searchId, '| Found at index:', rowIdx, '| All IDs:', allIds.slice(0,5));
     if(rowIdx<0) throw new Error('Eintrag nicht gefunden. ID: '+searchId);
     const sheetRow = rowIdx+1;
