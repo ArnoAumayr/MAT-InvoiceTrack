@@ -538,21 +538,8 @@ function showTab(tab){
 
 // ── SHEET SETUP ──
 async function ensureSheet(){
-  const sheetId = getSheetId();
-  if(!sheetId) return;
-  // Check if Rechnungen sheet exists, if not create headers
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:N1')}`;
-  const r = await fetch(url, { headers: { 'Authorization': 'Bearer '+accessToken } });
-  if(!r.ok) return; // Sheet tab may not exist yet, will be created on first write
-  const data = await r.json();
-  if(!data.values||!data.values[0]||!data.values[0][0]){
-    const headers = [['ID','Typ','Nummer','Datum','Fällig','Kunde','Beschreibung','Betrag','Status','Zahlungsdatum','Notiz','Erstellt','Geändert','Zahlungstage']];
-    const wr = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:N1')}?valueInputOption=RAW`,{
-      method:'PUT', headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
-      body: JSON.stringify({values:headers})
-    });
-    if(!wr.ok) { const e=await wr.json(); console.error('Header write failed:',e); }
-  }
+  // No headers needed - data starts at row 1
+  return;
 }
 
 // ── LOAD ALL ──
@@ -562,12 +549,12 @@ async function loadAll(){
   showSt('dash-status','<span class="spinner"></span> Daten werden geladen...','info');
   try{
     await ensureSheet();
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A2:N500')}?valueRenderOption=UNFORMATTED_VALUE`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:N500')}?valueRenderOption=UNFORMATTED_VALUE`;
     const r = await fetch(url, { headers: { 'Authorization': 'Bearer '+accessToken } });
     if(!r.ok) { const e=await r.json(); throw new Error('Laden fehlgeschlagen: '+e.error?.message); }
     const data = await r.json();
     console.log('Sheet data:', JSON.stringify(data).substring(0,300));
-    const rows = (data.values||[]).filter(r=>r.some(c=>c!==''&&c!==undefined));
+    const rows = (data.values||[]).filter(r=>r[0]&&r[0]!=='ID'&&r.some(c=>c!==''&&c!==undefined));
     console.log('Rows found:', rows.length);
     entries = rows.map(r=>({
       id: r[0]||'', typ: r[1]||'Rechnung', nr: r[2]||'', datum: r[3]||'',
