@@ -444,7 +444,7 @@ body {
 // ── CONFIG ──
 const GOOGLE_CLIENT_ID = '153450666140-bu77o2i7lkdb0racjdabk0ep8v2ps492.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets openid email profile';
-const SHEET_NAME = 'Rechnungen';
+const SHEET_NAME = 'Rechnungen'; // Must match tab name in Google Sheet
 
 // ── STATE ──
 let accessToken = null;
@@ -563,9 +563,12 @@ async function loadAll(){
   try{
     await ensureSheet();
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A2:N500')}?valueRenderOption=UNFORMATTED_VALUE`;
-    const r = await fetch(url,{headers:{Authorization:'Bearer '+accessToken}});
+    const r = await fetch(url, { headers: { 'Authorization': 'Bearer '+accessToken } });
+    if(!r.ok) { const e=await r.json(); throw new Error('Laden fehlgeschlagen: '+e.error?.message); }
     const data = await r.json();
+    console.log('Sheet data:', JSON.stringify(data).substring(0,300));
     const rows = (data.values||[]).filter(r=>r.some(c=>c!==''&&c!==undefined));
+    console.log('Rows found:', rows.length);
     entries = rows.map(r=>({
       id: r[0]||'', typ: r[1]||'Rechnung', nr: r[2]||'', datum: r[3]||'',
       faellig: r[4]||'', kunde: r[5]||'', beschreibung: r[6]||'',
