@@ -204,6 +204,12 @@ body {
 
 .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text3); }
 .empty-icon { font-size: 40px; margin-bottom: 1rem; display: block; opacity: .5; }
+.sort-bar { display:flex; gap:4px; margin-bottom:.75rem; flex-wrap:wrap; align-items:center; }
+.sort-bar span { font-size:10px; color:var(--text3); letter-spacing:.1em; text-transform:uppercase; margin-right:4px; }
+.sort-btn { padding:4px 10px; font-size:11px; border-radius:var(--radius-sm); border:0.5px solid var(--border2); background:#fff; color:var(--text2); font-family:var(--font-mono); cursor:pointer; transition:all .15s; }
+.sort-btn:hover { border-color:var(--accent); color:var(--accent); }
+.sort-btn.active { background:var(--accent); color:#fff; border-color:transparent; }
+.sort-btn .arrow { margin-left:3px; font-size:10px; }
 
 /* TOP BAR */
 .top-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
@@ -274,6 +280,15 @@ body {
         <h2>Rechnungen</h2>
         <button class="btn" onclick="loadAll()">🔄</button>
         <button class="btn primary" onclick="openModal('new-rechnung')">+ Neue Rechnung</button>
+      </div>
+      <div class="sort-bar">
+        <span>Sortierung:</span>
+        <button class="sort-btn active" id="sb-nr" onclick="setSort('nr')">Nummer <span class="arrow">↓</span></button>
+        <button class="sort-btn" id="sb-datum" onclick="setSort('datum')">Datum <span class="arrow"></span></button>
+        <button class="sort-btn" id="sb-kunde" onclick="setSort('kunde')">Kunde <span class="arrow"></span></button>
+        <button class="sort-btn" id="sb-betrag" onclick="setSort('betrag')">Betrag <span class="arrow"></span></button>
+        <button class="sort-btn" id="sb-status" onclick="setSort('status')">Status <span class="arrow"></span></button>
+        <button class="sort-btn" id="sb-faellig" onclick="setSort('faellig')">Fälligkeit <span class="arrow"></span></button>
       </div>
       <div id="filter-bar" style="display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap">
         <button class="btn btn-sm active-filter" onclick="filterInv('')" id="f-all">Alle</button>
@@ -451,6 +466,8 @@ let accessToken = null;
 let userInfo = null;
 let entries = [];
 let editingRow = null;
+let sortField = 'nr';
+let sortDir = 'desc';
 
 // ── SETTINGS ──
 function gs(k,d){ return localStorage.getItem('invtrack_'+k)||d; }
@@ -580,9 +597,7 @@ async function loadAll(){
     const r = await fetch(url, { headers: { 'Authorization': 'Bearer '+accessToken } });
     if(!r.ok) { const e=await r.json(); throw new Error('Laden fehlgeschlagen: '+e.error?.message); }
     const data = await r.json();
-    console.log('Sheet data:', JSON.stringify(data).substring(0,300));
     const rows = (data.values||[]).filter(r=>r[0]&&r[0]!=='ID'&&r.some(c=>c!==''&&c!==undefined));
-    console.log('Rows found:', rows.length);
     entries = rows.map(r=>({
       id: String(r[0]||'').trim(), typ: r[1]||'Rechnung', nr: r[2]||'', datum: toISO(r[3]),
       faellig: toISO(r[4]), kunde: r[5]||'', beschreibung: r[6]||'',
@@ -643,6 +658,25 @@ function filterInv(f){
   renderRechnungen();
 }
 
+function setSort(field){
+  if(sortField===field) {
+    sortDir = sortDir==='asc' ? 'desc' : 'asc';
+  } else {
+    sortField = field;
+    sortDir = 'desc';
+  }
+  // Update button styles
+  const fields = ['nr','datum','kunde','betrag','status','faellig'];
+  fields.forEach(f => {
+    const btn = document.getElementById('sb-'+f);
+    if(!btn) return;
+    btn.classList.toggle('active', f===sortField);
+    btn.querySelector('.arrow').textContent = f===sortField ? (sortDir==='asc'?'↑':'↓') : '';
+  });
+  renderRechnungen();
+  renderAngebote();
+}
+
 function renderRechnungen(){
   let list = entries.filter(e=>e.typ==='Rechnung');
   if(currentFilter) list = list.filter(e=>{
@@ -650,8 +684,10 @@ function renderRechnungen(){
     return cs===currentFilter || e.status===currentFilter;
   });
   list.sort((a,b)=>{
-    const na = String(a.nr||a.id||''), nb = String(b.nr||b.id||'');
-    return nb.localeCompare(na, undefined, {numeric:true});
+    let va = a[sortField]||'', vb = b[sortField]||'';
+    if(sortField==='betrag') return sortDir==='asc' ? va-vb : vb-va;
+    const cmp = String(va).localeCompare(String(vb), undefined, {numeric:true});
+    return sortDir==='asc' ? cmp : -cmp;
   });
   const el = document.getElementById('inv-list');
   if(!list.length){ el.innerHTML='<div class="empty-state"><span class="empty-icon">📄</span><p>Keine Rechnungen gefunden.</p></div>'; return; }
@@ -660,8 +696,10 @@ function renderRechnungen(){
 
 function renderAngebote(){
   const list = entries.filter(e=>e.typ==='Angebot').sort((a,b)=>{
-    const na = String(a.nr||a.id||''), nb = String(b.nr||b.id||'');
-    return nb.localeCompare(na, undefined, {numeric:true});
+    let va = a[sortField]||'', vb = b[sortField]||'';
+    if(sortField==='betrag') return sortDir==='asc' ? va-vb : vb-va;
+    const cmp = String(va).localeCompare(String(vb), undefined, {numeric:true});
+    return sortDir==='asc' ? cmp : -cmp;
   });
   const el = document.getElementById('ang-list');
   if(!list.length){ el.innerHTML='<div class="empty-state"><span class="empty-icon">💼</span><p>Keine Angebote gefunden.</p></div>'; return; }
@@ -690,7 +728,7 @@ function invRow(e, showUrgency){
     <div class="inv-betrag">€ ${fmtBetrag(e.betrag)}</div>
     <div class="inv-actions">
       ${e.typ==='Angebot'?`<button class="btn btn-sm" onclick="convertToRechnung('${e.id}')">→ Rechnung</button>`:''}
-      <button class="btn btn-sm" onclick="openStatusModal('${e.id}')">Status</button>
+      <button class="btn btn-sm" data-id="${e.id}" onclick="openStatusModal(this.dataset.id)">Status</button>
     </div>
   </div>`;
 }
@@ -729,7 +767,7 @@ function runMahnCheck(){
       </div>
       <div class="inv-betrag">€ ${fmtBetrag(e.betrag)}</div>
       <div class="inv-actions">
-        <button class="btn btn-sm danger" onclick="openStatusModal('${e.id}')">Mahnung setzen</button>
+        <button class="btn btn-sm danger" data-id="${e.id}" onclick="openStatusModal(this.dataset.id)">Mahnung setzen</button>
       </div>
     </div>`).join('');
     html += '</div>';
@@ -744,7 +782,7 @@ function runMahnCheck(){
       </div>
       <div class="inv-betrag">€ ${fmtBetrag(e.betrag)}</div>
       <div class="inv-actions">
-        <button class="btn btn-sm" onclick="openStatusModal('${e.id}')">Erinnerung setzen</button>
+        <button class="btn btn-sm" data-id="${e.id}" onclick="openStatusModal(this.dataset.id)">Erinnerung setzen</button>
       </div>
     </div>`).join('');
     html += '</div>';
@@ -822,7 +860,6 @@ let statusEntryId = null;
 function openStatusModal(id){
   statusEntryId = String(id).trim();
   const e = entries.find(x=>String(x.id).trim()===statusEntryId);
-  console.log('openStatusModal id:', statusEntryId, '| found:', !!e, '| entries ids:', entries.slice(0,3).map(x=>x.id));
   if(!e) { alert('Eintrag nicht gefunden: '+statusEntryId); return; }
   document.getElementById('status-modal').style.display='';
   document.getElementById('status-modal-info').innerHTML = `<strong>${esc(e.nr)} — ${esc(e.kunde)}</strong><br>€ ${fmtBetrag(e.betrag)} · Fällig: ${toDE(e.faellig)}`;
@@ -855,7 +892,7 @@ async function saveStatus(){
       Number(id) === Number(searchId) ||
       id.replace(/^0+/,'') === searchId.replace(/^0+/,'')
     );
-    console.log('Looking for ID:', searchId, '| Found at index:', rowIdx, '| All IDs:', allIds.slice(0,5));
+
     if(rowIdx<0) throw new Error('Eintrag nicht gefunden. ID: '+searchId);
     const sheetRow = rowIdx+1;
 
