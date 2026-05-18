@@ -584,7 +584,7 @@ async function loadAll(){
     const rows = (data.values||[]).filter(r=>r[0]&&r[0]!=='ID'&&r.some(c=>c!==''&&c!==undefined));
     console.log('Rows found:', rows.length);
     entries = rows.map(r=>({
-      id: r[0]||'', typ: r[1]||'Rechnung', nr: r[2]||'', datum: toISO(r[3]),
+      id: String(r[0]||'').trim(), typ: r[1]||'Rechnung', nr: r[2]||'', datum: toISO(r[3]),
       faellig: toISO(r[4]), kunde: r[5]||'', beschreibung: r[6]||'',
       betrag: parseFloat(r[7])||0, status: r[8]||'Offen',
       zahldatum: toISO(r[9]), notiz: r[10]||'', erstellt: toISO(r[11]),
@@ -649,14 +649,20 @@ function renderRechnungen(){
     const cs = computeStatus(e);
     return cs===currentFilter || e.status===currentFilter;
   });
-  list.sort((a,b)=>String(b.nr).localeCompare(String(a.nr), undefined, {numeric:true}));
+  list.sort((a,b)=>{
+    const na = String(a.nr||a.id||''), nb = String(b.nr||b.id||'');
+    return nb.localeCompare(na, undefined, {numeric:true});
+  });
   const el = document.getElementById('inv-list');
   if(!list.length){ el.innerHTML='<div class="empty-state"><span class="empty-icon">📄</span><p>Keine Rechnungen gefunden.</p></div>'; return; }
   el.innerHTML='<div class="card">'+list.map(e=>invRow(e,false)).join('')+'</div>';
 }
 
 function renderAngebote(){
-  const list = entries.filter(e=>e.typ==='Angebot').sort((a,b)=>String(b.nr).localeCompare(String(a.nr), undefined, {numeric:true}));
+  const list = entries.filter(e=>e.typ==='Angebot').sort((a,b)=>{
+    const na = String(a.nr||a.id||''), nb = String(b.nr||b.id||'');
+    return nb.localeCompare(na, undefined, {numeric:true});
+  });
   const el = document.getElementById('ang-list');
   if(!list.length){ el.innerHTML='<div class="empty-state"><span class="empty-icon">💼</span><p>Keine Angebote gefunden.</p></div>'; return; }
   el.innerHTML='<div class="card">'+list.map(e=>invRow(e,false)).join('')+'</div>';
@@ -814,8 +820,10 @@ async function saveEntry(){
 // ── STATUS MODAL ──
 let statusEntryId = null;
 function openStatusModal(id){
-  statusEntryId = id;
-  const e = entries.find(x=>x.id===id); if(!e) return;
+  statusEntryId = String(id).trim();
+  const e = entries.find(x=>String(x.id).trim()===statusEntryId);
+  console.log('openStatusModal id:', statusEntryId, '| found:', !!e, '| entries ids:', entries.slice(0,3).map(x=>x.id));
+  if(!e) { alert('Eintrag nicht gefunden: '+statusEntryId); return; }
   document.getElementById('status-modal').style.display='';
   document.getElementById('status-modal-info').innerHTML = `<strong>${esc(e.nr)} — ${esc(e.kunde)}</strong><br>€ ${fmtBetrag(e.betrag)} · Fällig: ${toDE(e.faellig)}`;
   document.getElementById('sm-status').value = e.status||'Offen';
