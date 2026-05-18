@@ -832,12 +832,18 @@ async function saveStatus(){
 
   try{
     const sheetId = getSheetId();
-    // Find row in sheet
+    if(!sheetId) throw new Error('Keine Spreadsheet ID');
+    
+    // Find row - compare trimmed strings
     const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A:A')}`;
-    const getR = await fetch(getUrl,{headers:{Authorization:'Bearer '+accessToken}});
+    const getR = await fetch(getUrl, { headers: { 'Authorization': 'Bearer '+accessToken } });
+    if(!getR.ok) { const err=await getR.json(); throw new Error(err.error?.message); }
     const getData = await getR.json();
-    const rowIdx = (getData.values||[]).findIndex(r=>r[0]===statusEntryId);
-    if(rowIdx<0) throw new Error('Eintrag nicht gefunden');
+    const allIds = (getData.values||[]).map(r=>String(r[0]||'').trim());
+    const searchId = String(statusEntryId).trim();
+    const rowIdx = allIds.findIndex(id => id === searchId);
+    console.log('Looking for ID:', searchId, '| Found at index:', rowIdx, '| All IDs:', allIds.slice(0,5));
+    if(rowIdx<0) throw new Error('Eintrag nicht gefunden. ID: '+searchId);
     const sheetRow = rowIdx+1;
 
     const updates = [
@@ -846,10 +852,11 @@ async function saveStatus(){
       {range:`${SHEET_NAME}!K${sheetRow}`, values:[[notiz||e.notiz]]},
       {range:`${SHEET_NAME}!M${sheetRow}`, values:[[today()]]},
     ];
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
-      method:'POST', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+    const wr = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
+      method:'POST', headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
       body: JSON.stringify({valueInputOption:'RAW', data:updates})
     });
+    if(!wr.ok) { const err=await wr.json(); throw new Error(err.error?.message); }
     closeStatusModal();
     await loadAll();
   }catch(e2){
