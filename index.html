@@ -283,12 +283,20 @@ body {
       </div>
       <div class="sort-bar">
         <span>Sortierung:</span>
+        <button class="sort-btn" id="sb-firma" onclick="setSort('firma')">Firma <span class="arrow"></span></button>
         <button class="sort-btn active" id="sb-nr" onclick="setSort('nr')">Nummer <span class="arrow">↓</span></button>
         <button class="sort-btn" id="sb-datum" onclick="setSort('datum')">Datum <span class="arrow"></span></button>
         <button class="sort-btn" id="sb-kunde" onclick="setSort('kunde')">Kunde <span class="arrow"></span></button>
         <button class="sort-btn" id="sb-betrag" onclick="setSort('betrag')">Betrag <span class="arrow"></span></button>
         <button class="sort-btn" id="sb-status" onclick="setSort('status')">Status <span class="arrow"></span></button>
         <button class="sort-btn" id="sb-faellig" onclick="setSort('faellig')">Fälligkeit <span class="arrow"></span></button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:.5rem;flex-wrap:wrap;align-items:center">
+        <span style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase">Firma:</span>
+        <button class="sort-btn active" id="ff-all" onclick="filterFirma('')">Alle</button>
+        <button class="sort-btn" id="ff-mat" onclick="filterFirma('MAKE A TEAM')">MAKE A TEAM</button>
+        <button class="sort-btn" id="ff-3ds" onclick="filterFirma('3DSOLX')">3DSOLX</button>
+        <button class="sort-btn" id="ff-mak" onclick="filterFirma('Maker Austria')">Maker Austria</button>
       </div>
       <div id="filter-bar" style="display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap">
         <button class="btn btn-sm active-filter" onclick="filterInv('')" id="f-all">Alle</button>
@@ -369,6 +377,14 @@ body {
       <div class="modal-body">
         <div id="modal-status"></div>
         <div class="form-grid">
+          <div class="form-field full">
+            <label>Firma / Abteilung</label>
+            <select id="f-firma">
+              <option value="MAKE A TEAM">MAKE A TEAM</option>
+              <option value="3DSOLX">3DSOLX</option>
+              <option value="Maker Austria">Maker Austria</option>
+            </select>
+          </div>
           <div class="form-field full">
             <label>Typ</label>
             <select id="f-typ">
@@ -599,11 +615,12 @@ async function loadAll(){
     const data = await r.json();
     const rows = (data.values||[]).filter(r=>r[0]&&r[0]!=='ID'&&r.some(c=>c!==''&&c!==undefined));
     entries = rows.map(r=>({
-      id: String(r[0]||'').trim(), typ: r[1]||'Rechnung', nr: r[2]||'', datum: toISO(r[3]),
-      faellig: toISO(r[4]), kunde: r[5]||'', beschreibung: r[6]||'',
-      betrag: parseFloat(r[7])||0, status: r[8]||'Offen',
-      zahldatum: toISO(r[9]), notiz: r[10]||'', erstellt: toISO(r[11]),
-      geaendert: toISO(r[12]), zahltage: parseInt(r[13])||14
+      firma: r[0]||'', id: String(r[1]||'').trim(), typ: r[2]||'Rechnung',
+      angebotNr: r[3]||'', nr: r[4]||'', datum: toISO(r[5]),
+      faellig: toISO(r[6]), kunde: r[7]||'', beschreibung: r[8]||'',
+      betrag: parseFloat(r[9])||0, status: r[10]||'Offen',
+      zahldatum: toISO(r[11]), notiz: r[12]||'', erstellt: r[13]||'',
+      geaendert: r[14]||'', zahltage: parseInt(r[15])||14
     }));
     document.getElementById('dash-status').innerHTML='';
     renderAll();
@@ -650,6 +667,19 @@ function renderDashboard(){
 
 // ── RECHNUNGEN ──
 let currentFilter = '';
+let firmaFilter = '';
+
+function filterFirma(f){
+  firmaFilter = f;
+  ['all','mat','3ds','mak'].forEach(k=>{
+    const btn = document.getElementById('ff-'+k);
+    if(btn) btn.classList.toggle('active', 
+      (f===''&&k==='all')||(f==='MAKE A TEAM'&&k==='mat')||(f==='3DSOLX'&&k==='3ds')||(f==='Maker Austria'&&k==='mak')
+    );
+  });
+  renderRechnungen();
+  renderAngebote();
+}
 function filterInv(f){
   currentFilter = f;
   document.querySelectorAll('#filter-bar .btn').forEach(b=>b.style.fontWeight='');
@@ -666,7 +696,7 @@ function setSort(field){
     sortDir = 'desc';
   }
   // Update button styles
-  const fields = ['nr','datum','kunde','betrag','status','faellig'];
+  const fields = ['firma','nr','datum','kunde','betrag','status','faellig'];
   fields.forEach(f => {
     const btn = document.getElementById('sb-'+f);
     if(!btn) return;
@@ -679,6 +709,7 @@ function setSort(field){
 
 function renderRechnungen(){
   let list = entries.filter(e=>e.typ==='Rechnung');
+  if(firmaFilter) list = list.filter(e=>e.firma===firmaFilter);
   if(currentFilter) list = list.filter(e=>{
     const cs = computeStatus(e);
     return cs===currentFilter || e.status===currentFilter;
@@ -695,7 +726,7 @@ function renderRechnungen(){
 }
 
 function renderAngebote(){
-  const list = entries.filter(e=>e.typ==='Angebot').sort((a,b)=>{
+  const list = entries.filter(e=>e.typ==='Angebot'&&(!firmaFilter||e.firma===firmaFilter)).sort((a,b)=>{
     let va = a[sortField]||'', vb = b[sortField]||'';
     if(sortField==='betrag') return sortDir==='asc' ? va-vb : vb-va;
     const cmp = String(va).localeCompare(String(vb), undefined, {numeric:true});
@@ -720,7 +751,7 @@ function invRow(e, showUrgency){
 
   return `<div class="inv-row ${urgencyClass}">
     <div class="inv-meta">
-      <div class="inv-nr">${esc(e.nr)} · ${esc(e.kunde)}</div>
+      <div class="inv-nr">${e.firma?esc(e.firma)+' · ':''}${esc(e.nr)}${e.angebotNr?' (Ang: '+esc(e.angebotNr)+')':''} · ${esc(e.kunde)}</div>
       <div class="inv-name">${esc(e.beschreibung)}</div>
       <div class="inv-dates">${dateInfo}</div>
     </div>
@@ -761,7 +792,7 @@ function runMahnCheck(){
     html += '<div class="section-label">🔴 Mahnung erforderlich</div><div class="card">';
     html += toMahn.map(e=>`<div class="inv-row urgent">
       <div class="inv-meta">
-        <div class="inv-nr">${esc(e.nr)} · ${esc(e.kunde)}</div>
+        <div class="inv-nr">${e.firma?esc(e.firma)+' · ':''}${esc(e.nr)}${e.angebotNr?' (Ang: '+esc(e.angebotNr)+')':''} · ${esc(e.kunde)}</div>
         <div class="inv-name">${esc(e.beschreibung)}</div>
         <div class="inv-dates">Fällig: ${toDE(e.faellig)} · ${daysDiff(e.faellig,t)} Tage überfällig</div>
       </div>
@@ -776,7 +807,7 @@ function runMahnCheck(){
     html += '<div class="section-label">🟡 Erinnerung erforderlich</div><div class="card">';
     html += toErin.map(e=>`<div class="inv-row warn">
       <div class="inv-meta">
-        <div class="inv-nr">${esc(e.nr)} · ${esc(e.kunde)}</div>
+        <div class="inv-nr">${e.firma?esc(e.firma)+' · ':''}${esc(e.nr)}${e.angebotNr?' (Ang: '+esc(e.angebotNr)+')':''} · ${esc(e.kunde)}</div>
         <div class="inv-name">${esc(e.beschreibung)}</div>
         <div class="inv-dates">Fällig: ${toDE(e.faellig)} · ${daysDiff(e.faellig,t)} Tage überfällig</div>
       </div>
@@ -799,6 +830,7 @@ function openModal(mode){
   const isAngebot = mode==='new-angebot';
   document.getElementById('modal-title').textContent = isAngebot ? 'Neues Angebot' : 'Neue Rechnung';
   document.getElementById('f-typ').value = isAngebot ? 'Angebot' : 'Rechnung';
+  document.getElementById('f-firma').value = 'MAKE A TEAM';
   document.getElementById('f-datum').value = today();
   document.getElementById('f-nr').value = '';
   document.getElementById('f-kunde').value = '';
@@ -824,7 +856,17 @@ async function saveEntry(){
   const id = Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   const faellig = typ==='Rechnung' ? addDays(datum, zahltage) : '';
   const now = today();
-  const row = [id, typ, nr, datum, faellig, kunde, beschreibung, betrag, 'Offen', '', notiz, now, now, zahltage];
+  const firma = document.getElementById('f-firma').value;
+  const angebotNr = typ==='Angebot' ? nr : '';
+  const rechnungNr = typ==='Rechnung' ? nr : '';
+  // Duplicate check: firma + nummer must be unique
+  const dupCheck = entries.find(e => 
+    String(e.firma).trim()===String(firma).trim() && 
+    String(e.nr).trim()===String(rechnungNr).trim() && 
+    rechnungNr !== ''
+  );
+  if(dupCheck) { showSt('modal-status','⚠ Diese Nummer existiert bereits für '+firma,'warn'); return; }
+  const row = [firma, id, typ, angebotNr, rechnungNr, datum, faellig, kunde, beschreibung, betrag, 'Offen', '', notiz, now, now, zahltage];
 
   showSt('modal-status','<span class="spinner"></span> Wird gespeichert...','info');
   try{
@@ -880,7 +922,7 @@ async function saveStatus(){
     if(!sheetId) throw new Error('Keine Spreadsheet ID');
     
     // Find row - compare trimmed strings
-    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A:A')}`;
+    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!B:B')}`;
     const getR = await fetch(getUrl, { headers: { 'Authorization': 'Bearer '+accessToken } });
     if(!getR.ok) { const err=await getR.json(); throw new Error(err.error?.message); }
     const getData = await getR.json();
@@ -897,10 +939,10 @@ async function saveStatus(){
     const sheetRow = rowIdx+1;
 
     const updates = [
-      {range:`${SHEET_NAME}!I${sheetRow}`, values:[[newStatus]]},
-      {range:`${SHEET_NAME}!J${sheetRow}`, values:[[zahldatum]]},
-      {range:`${SHEET_NAME}!K${sheetRow}`, values:[[notiz||e.notiz]]},
-      {range:`${SHEET_NAME}!M${sheetRow}`, values:[[today()]]},
+      {range:`${SHEET_NAME}!K${sheetRow}`, values:[[newStatus]]},      // K=Status
+      {range:`${SHEET_NAME}!L${sheetRow}`, values:[[zahldatum]]},      // L=Zahlungsdatum
+      {range:`${SHEET_NAME}!M${sheetRow}`, values:[[notiz||e.notiz]]}, // M=Notiz
+      {range:`${SHEET_NAME}!O${sheetRow}`, values:[[today()]]},        // O=Geändert
     ];
     const wr = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
       method:'POST', headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
@@ -916,23 +958,32 @@ async function saveStatus(){
 
 // ── CONVERT ANGEBOT → RECHNUNG ──
 async function convertToRechnung(id){
-  if(!confirm('Angebot in Rechnung umwandeln?')) return;
   const e = entries.find(x=>x.id===id); if(!e) return;
+  const rechnungNr = prompt('Rechnungsnummer eingeben:', '');
+  if(rechnungNr===null) return;
+  if(!rechnungNr.trim()){ alert('Bitte eine Rechnungsnummer eingeben.'); return; }
+  // Duplicate check
+  const dup = entries.find(x => String(x.firma)===String(e.firma) && String(x.nr)===rechnungNr.trim() && x.id!==id);
+  if(dup){ alert('Diese Rechnungsnummer existiert bereits für '+e.firma); return; }
   try{
     const sheetId = getSheetId();
-    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A:A')}`;
-    const getR = await fetch(getUrl,{headers:{Authorization:'Bearer '+accessToken}});
+    const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!B:B')}`;
+    const getR = await fetch(getUrl,{headers:{'Authorization':'Bearer '+accessToken}});
     const getData = await getR.json();
-    const rowIdx = (getData.values||[]).findIndex(r=>r[0]===id);
+    const allIds = (getData.values||[]).map(r=>String(r[0]||'').trim());
+    const rowIdx = allIds.findIndex(x=>x===String(id).trim());
+    if(rowIdx<0){ alert('Eintrag nicht gefunden'); return; }
     const sheetRow = rowIdx+1;
     const faellig = addDays(today(), e.zahltage||14);
     await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
-      method:'POST', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+      method:'POST', headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
       body: JSON.stringify({valueInputOption:'RAW', data:[
-        {range:`${SHEET_NAME}!B${sheetRow}`, values:[['Rechnung']]},
-        {range:`${SHEET_NAME}!E${sheetRow}`, values:[[faellig]]},
-        {range:`${SHEET_NAME}!I${sheetRow}`, values:[['Offen']]},
-        {range:`${SHEET_NAME}!M${sheetRow}`, values:[[today()]]},
+        {range:`${SHEET_NAME}!C${sheetRow}`, values:[['Rechnung']]},
+        {range:`${SHEET_NAME}!D${sheetRow}`, values:[[e.nr]]},   // AngebotNr
+        {range:`${SHEET_NAME}!E${sheetRow}`, values:[[rechnungNr.trim()]]}, // RechnungNr
+        {range:`${SHEET_NAME}!G${sheetRow}`, values:[[faellig]]},
+        {range:`${SHEET_NAME}!K${sheetRow}`, values:[['Offen']]},
+        {range:`${SHEET_NAME}!O${sheetRow}`, values:[[today()]]},
       ]})
     });
     await loadAll();
