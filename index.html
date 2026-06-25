@@ -304,6 +304,7 @@ body {
         <button class="btn btn-sm" onclick="filterInv('Erinnerung')" id="f-erin">Erinnerung</button>
         <button class="btn btn-sm" onclick="filterInv('Mahnung')" id="f-mahn">Mahnung</button>
         <button class="btn btn-sm" onclick="filterInv('Bezahlt')" id="f-bezahlt">Bezahlt</button>
+        <button class="btn btn-sm" onclick="filterInv('BetragFalsch')" id="f-betragfalsch" style="border-color:var(--red-border);color:var(--red)">⚠ Betrag Falsch</button>
       </div>
       <div id="inv-list"><div class="empty-state"><span class="empty-icon">📄</span><p>Keine Rechnungen geladen.</p></div></div>
     </div>
@@ -452,9 +453,30 @@ body {
               <option value="Storniert">Storniert</option>
             </select>
           </div>
-          <div class="form-field full">
-            <label>Zahlungsdatum (bei Bezahlt)</label>
-            <input type="date" id="sm-zahldatum">
+          <div style="font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem;grid-column:1/-1">Zahlungseingänge</div>
+          <div class="form-field">
+            <label>Datum 1</label>
+            <input type="date" id="sm-zahldatum1">
+          </div>
+          <div class="form-field">
+            <label>Betrag 1 €</label>
+            <input type="number" id="sm-bezahlt1" step="0.01" placeholder="0.00">
+          </div>
+          <div class="form-field">
+            <label>Datum 2</label>
+            <input type="date" id="sm-zahldatum2">
+          </div>
+          <div class="form-field">
+            <label>Betrag 2 €</label>
+            <input type="number" id="sm-bezahlt2" step="0.01" placeholder="0.00">
+          </div>
+          <div class="form-field">
+            <label>Datum 3</label>
+            <input type="date" id="sm-zahldatum3">
+          </div>
+          <div class="form-field">
+            <label>Betrag 3 €</label>
+            <input type="number" id="sm-bezahlt3" step="0.01" placeholder="0.00">
           </div>
           <div class="form-field full">
             <label>Notiz</label>
@@ -618,9 +640,17 @@ async function loadAll(){
       firma: r[0]||'', id: String(r[1]||'').trim(), typ: r[2]||'Rechnung',
       angebotNr: r[3]||'', nr: r[4]||'', datum: toISO(r[5]),
       faellig: toISO(r[6]), kunde: r[7]||'', beschreibung: r[8]||'',
-      betrag: parseFloat(r[9])||0, status: r[10]||'Offen',
-      zahldatum: toISO(r[11]), notiz: r[12]||'', erstellt: r[13]||'',
-      geaendert: r[14]||'', zahltage: parseInt(r[15])||14
+      zahltage: parseInt(r[9])||14,               // J
+      betrag: parseFloat(r[10])||0,                // K
+      status: r[11]||'Offen',                      // L
+      zahldatum1: toISO(r[12]),                          // M
+      bezahlt1: parseFloat(r[13])||0,              // N
+      zahldatum2: toISO(r[14]),                    // O
+      bezahlt2: parseFloat(r[15])||0,              // P
+      zahldatum3: toISO(r[16]),                    // Q
+      bezahlt3: parseFloat(r[17])||0,              // R
+      notiz: r[18]||'',                            // S
+      erstellt: r[19]||'', geaendert: r[20]||''
     }));
     document.getElementById('dash-status').innerHTML='';
     renderAll();
@@ -683,7 +713,7 @@ function filterFirma(f){
 function filterInv(f){
   currentFilter = f;
   document.querySelectorAll('#filter-bar .btn').forEach(b=>b.style.fontWeight='');
-  const map={'':'f-all','Offen':'f-offen','Erinnerung':'f-erin','Mahnung':'f-mahn','Bezahlt':'f-bezahlt'};
+  const map={'':'f-all','Offen':'f-offen','Erinnerung':'f-erin','Mahnung':'f-mahn','Bezahlt':'f-bezahlt','BetragFalsch':'f-betragfalsch'};
   if(map[f]) document.getElementById(map[f]).style.fontWeight='600';
   renderRechnungen();
 }
@@ -710,10 +740,17 @@ function setSort(field){
 function renderRechnungen(){
   let list = entries.filter(e=>e.typ==='Rechnung');
   if(firmaFilter) list = list.filter(e=>e.firma===firmaFilter);
-  if(currentFilter) list = list.filter(e=>{
-    const cs = computeStatus(e);
-    return cs===currentFilter || e.status===currentFilter;
-  });
+  if(currentFilter === 'BetragFalsch') {
+    list = list.filter(e => {
+      const total = (e.bezahlt1||0)+(e.bezahlt2||0)+(e.bezahlt3||0);
+      return total > 0 && Math.abs(total - e.betrag) > 0.01;
+    });
+  } else if(currentFilter) {
+    list = list.filter(e=>{
+      const cs = computeStatus(e);
+      return cs===currentFilter || e.status===currentFilter;
+    });
+  }
   list.sort((a,b)=>{
     let va = a[sortField]||'', vb = b[sortField]||'';
     if(sortField==='betrag') return sortDir==='asc' ? va-vb : vb-va;
@@ -747,7 +784,14 @@ function invRow(e, showUrgency){
   let dateInfo = `Re-Datum: ${toDE(e.datum)}`;
   if(e.faellig && e.typ==='Rechnung') dateInfo += ` · Fällig: ${toDE(e.faellig)}`;
   if(e.typ==='Rechnung' && e.status!=='Bezahlt' && overdueDays>0) dateInfo += ` · <span style="color:var(--red)">${overdueDays} Tage überfällig</span>`;
-  if(e.zahldatum) dateInfo += ` · Bezahlt: ${toDE(e.zahldatum)}`;
+  const totalBezahlt = (e.bezahlt1||0) + (e.bezahlt2||0) + (e.bezahlt3||0);
+  if(e.zahldatum1) dateInfo += ` · Zhlg.1: ${toDE(e.zahldatum1)}${e.bezahlt1?' '+fmtBetrag(e.bezahlt1)+' €':''}`;
+  if(e.zahldatum2) dateInfo += ` · Zhlg.2: ${toDE(e.zahldatum2)}${e.bezahlt2?' '+fmtBetrag(e.bezahlt2)+' €':''}`;
+  if(e.zahldatum3) dateInfo += ` · Zhlg.3: ${toDE(e.zahldatum3)}${e.bezahlt3?' '+fmtBetrag(e.bezahlt3)+' €':''}`;
+  if(totalBezahlt > 0 && Math.abs(totalBezahlt - e.betrag) > 0.01) {
+    const diff = (totalBezahlt - e.betrag);
+    dateInfo += ` · <span style="color:var(--red);font-weight:500">⚠ Total: ${fmtBetrag(totalBezahlt)} € (${diff>0?'+':''}${diff.toFixed(2).replace('.',',')} €)</span>`;
+  }
 
   return `<div class="inv-row ${urgencyClass}">
     <div class="inv-meta">
@@ -866,7 +910,7 @@ async function saveEntry(){
     rechnungNr !== ''
   );
   if(dupCheck) { showSt('modal-status','⚠ Diese Nummer existiert bereits für '+firma,'warn'); return; }
-  const row = [firma, id, typ, angebotNr, rechnungNr, datum, faellig, kunde, beschreibung, betrag, 'Offen', '', notiz, now, now, zahltage];
+  const row = [firma, id, typ, angebotNr, rechnungNr, datum, faellig, kunde, beschreibung, zahltage, betrag, 'Offen', '', '', '', '', '', '', notiz];
 
   showSt('modal-status','<span class="spinner"></span> Wird gespeichert...','info');
   try{
@@ -906,16 +950,26 @@ function openStatusModal(id){
   document.getElementById('status-modal').style.display='';
   document.getElementById('status-modal-info').innerHTML = `<strong>${esc(e.nr)} — ${esc(e.kunde)}</strong><br>€ ${fmtBetrag(e.betrag)} · Fällig: ${toDE(e.faellig)}`;
   document.getElementById('sm-status').value = e.status||'Offen';
-  document.getElementById('sm-zahldatum').value = e.zahldatum||'';
+  document.getElementById('sm-zahldatum1').value = e.zahldatum1||e.zahldatum||'';
+  document.getElementById('sm-bezahlt1').value   = e.bezahlt1||'';
+  document.getElementById('sm-zahldatum2').value = e.zahldatum2||'';
+  document.getElementById('sm-bezahlt2').value   = e.bezahlt2||'';
+  document.getElementById('sm-zahldatum3').value = e.zahldatum3||'';
+  document.getElementById('sm-bezahlt3').value   = e.bezahlt3||'';
   document.getElementById('sm-notiz').value = '';
 }
 function closeStatusModal(){ document.getElementById('status-modal').style.display='none'; }
 
 async function saveStatus(){
   const e = entries.find(x=>x.id===statusEntryId); if(!e) return;
-  const newStatus = document.getElementById('sm-status').value;
-  const zahldatum = document.getElementById('sm-zahldatum').value;
-  const notiz = document.getElementById('sm-notiz').value;
+  const newStatus  = document.getElementById('sm-status').value;
+  const zahldatum1 = document.getElementById('sm-zahldatum1').value;
+  const bezahlt1   = parseFloat(document.getElementById('sm-bezahlt1').value)||0;
+  const zahldatum2 = document.getElementById('sm-zahldatum2').value;
+  const bezahlt2   = parseFloat(document.getElementById('sm-bezahlt2').value)||0;
+  const zahldatum3 = document.getElementById('sm-zahldatum3').value;
+  const bezahlt3   = parseFloat(document.getElementById('sm-bezahlt3').value)||0;
+  const notiz      = document.getElementById('sm-notiz').value;
 
   try{
     const sheetId = getSheetId();
@@ -939,10 +993,14 @@ async function saveStatus(){
     const sheetRow = rowIdx+1;
 
     const updates = [
-      {range:`${SHEET_NAME}!K${sheetRow}`, values:[[newStatus]]},      // K=Status
-      {range:`${SHEET_NAME}!L${sheetRow}`, values:[[zahldatum]]},      // L=Zahlungsdatum
-      {range:`${SHEET_NAME}!M${sheetRow}`, values:[[notiz||e.notiz]]}, // M=Notiz
-      {range:`${SHEET_NAME}!O${sheetRow}`, values:[[today()]]},        // O=Geändert
+      {range:`${SHEET_NAME}!L${sheetRow}`, values:[[newStatus]]},             // L=Status
+      {range:`${SHEET_NAME}!M${sheetRow}`, values:[[zahldatum1]]},            // M=Datum1
+      {range:`${SHEET_NAME}!N${sheetRow}`, values:[[bezahlt1||'']]},          // N=Betrag1
+      {range:`${SHEET_NAME}!O${sheetRow}`, values:[[zahldatum2]]},            // O=Datum2
+      {range:`${SHEET_NAME}!P${sheetRow}`, values:[[bezahlt2||'']]},          // P=Betrag2
+      {range:`${SHEET_NAME}!Q${sheetRow}`, values:[[zahldatum3]]},            // Q=Datum3
+      {range:`${SHEET_NAME}!R${sheetRow}`, values:[[bezahlt3||'']]},          // R=Betrag3
+      {range:`${SHEET_NAME}!S${sheetRow}`, values:[[notiz||e.notiz]]},        // S=Notiz
     ];
     const wr = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
       method:'POST', headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
