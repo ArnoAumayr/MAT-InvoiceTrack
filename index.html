@@ -543,6 +543,15 @@ function toDE(dateStr){
   return s;
 }
 
+function parseDE(s){
+  if(!s && s!==0) return 0;
+  if(typeof s==='number') return s;
+  const str = String(s).trim();
+  if(str.includes(',') && str.includes('.')) return parseFloat(str.split('.').join('').replace(',','.')) || 0;
+  if(str.includes(',')) return parseFloat(str.replace(',','.')) || 0;
+  return parseFloat(str) || 0;
+}
+
 function toISO(dateStr){
   if(!dateStr && dateStr!==0) return '';
   if(typeof dateStr === 'number') {
@@ -641,14 +650,14 @@ async function loadAll(){
       angebotNr: r[3]||'', nr: r[4]||'', datum: toISO(r[5]),
       faellig: toISO(r[6]), kunde: r[7]||'', beschreibung: r[8]||'',
       zahltage: parseInt(r[9])||14,               // J
-      betrag: parseFloat(r[10])||0,                // K
+      betrag: parseDE(r[10])||0,                // K
       status: r[11]||'Offen',                      // L
       zahldatum1: toISO(r[12]),                          // M
-      bezahlt1: parseFloat(r[13])||0,              // N
+      bezahlt1: parseDE(r[13])||0,              // N
       zahldatum2: toISO(r[14]),                    // O
-      bezahlt2: parseFloat(r[15])||0,              // P
+      bezahlt2: parseDE(r[15])||0,              // P
       zahldatum3: toISO(r[16]),                    // Q
-      bezahlt3: parseFloat(r[17])||0,              // R
+      bezahlt3: parseDE(r[17])||0,              // R
       notiz: r[18]||'',                            // S
       erstellt: r[19]||'', geaendert: r[20]||''
     }));
