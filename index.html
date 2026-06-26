@@ -300,6 +300,10 @@ body {
           </select>
         </div>
         <div style="display:flex;flex-direction:column;gap:3px">
+          <label style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Kunde</label>
+          <input type="text" id="search-kunde" oninput="applySearch()" placeholder="Kundenname..." style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:var(--font-mono);width:140px">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px">
           <label style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Re-Datum von</label>
           <input type="date" id="search-datum-von" onchange="applySearch()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:var(--font-mono)">
         </div>
@@ -323,6 +327,7 @@ body {
         <button class="btn btn-sm" onclick="filterInv('Erinnerung')" id="f-erin">Erinnerung</button>
         <button class="btn btn-sm" onclick="filterInv('Mahnung')" id="f-mahn">Mahnung</button>
         <button class="btn btn-sm" onclick="filterInv('Bezahlt')" id="f-bezahlt">Bezahlt</button>
+        <button class="btn btn-sm" onclick="filterInv('Storniert')" id="f-storniert">Storniert</button>
         <button class="btn btn-sm" onclick="filterInv('BetragFalsch')" id="f-betragfalsch" style="border-color:var(--red-border);color:var(--red)">⚠ Betrag Falsch</button>
       </div>
       <div id="inv-list"><div class="empty-state"><span class="empty-icon">📄</span><p>Keine Rechnungen geladen.</p></div></div>
@@ -737,6 +742,7 @@ function applySearch(){ renderRechnungen(); }
 
 function clearSearch(){
   document.getElementById('search-firma').value = '';
+  document.getElementById('search-kunde').value = '';
   document.getElementById('search-datum-von').value = '';
   document.getElementById('search-datum-bis').value = '';
   document.getElementById('search-betrag-von').value = '';
@@ -746,8 +752,9 @@ function clearSearch(){
 
 function getSearchFilters(){
   return {
-    firma:    document.getElementById('search-firma')?.value || '',
-    datumVon: document.getElementById('search-datum-von')?.value || '',
+    firma:     document.getElementById('search-firma')?.value || '',
+    kunde:     document.getElementById('search-kunde')?.value || '',
+    datumVon:  document.getElementById('search-datum-von')?.value || '',
     datumBis: document.getElementById('search-datum-bis')?.value || '',
     betragVon: parseFloat(document.getElementById('search-betrag-von')?.value) || null,
     betragBis: parseFloat(document.getElementById('search-betrag-bis')?.value) || null,
@@ -756,7 +763,7 @@ function getSearchFilters(){
 function filterInv(f){
   currentFilter = f;
   document.querySelectorAll('#filter-bar .btn').forEach(b=>b.style.fontWeight='');
-  const map={'':'f-all','Offen':'f-offen','Erinnerung':'f-erin','Mahnung':'f-mahn','Bezahlt':'f-bezahlt','BetragFalsch':'f-betragfalsch'};
+  const map={'':'f-all','Offen':'f-offen','Erinnerung':'f-erin','Mahnung':'f-mahn','Bezahlt':'f-bezahlt','Storniert':'f-storniert','BetragFalsch':'f-betragfalsch'};
   if(map[f]) document.getElementById(map[f]).style.fontWeight='600';
   renderRechnungen();
 }
@@ -784,6 +791,7 @@ function renderRechnungen(){
   const sf = getSearchFilters();
   let list = entries.filter(e=>e.typ==='Rechnung');
   if(sf.firma) list = list.filter(e=>e.firma===sf.firma);
+  if(sf.kunde) list = list.filter(e=>e.kunde.toLowerCase().includes(sf.kunde.toLowerCase()));
   if(sf.datumVon && sf.datumBis) list = list.filter(e=>e.datum>=sf.datumVon && e.datum<=sf.datumBis);
   else if(sf.datumVon) list = list.filter(e=>e.datum===sf.datumVon);
   if(sf.betragVon!==null && sf.betragBis!==null) list = list.filter(e=>e.betrag>=sf.betragVon && e.betrag<=sf.betragBis);
