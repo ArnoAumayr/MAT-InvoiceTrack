@@ -644,6 +644,10 @@ async function loadAll(){
     const r = await fetch(url, { headers: { 'Authorization': 'Bearer '+accessToken } });
     if(!r.ok) { const e=await r.json(); throw new Error('Laden fehlgeschlagen: '+e.error?.message); }
     const data = await r.json();
+    // DEBUG: log first matching row with payments
+    const debugRow = (data.values||[]).find(r => r[13] || r[14]);
+    if(debugRow) console.log('DEBUG row (first with payment data):', JSON.stringify(debugRow));
+    console.log('DEBUG total columns in first row:', (data.values||[[]])[1]?.length);
     const rows = (data.values||[]).filter(r=>r[0]&&r[0]!=='ID'&&r.some(c=>c!==''&&c!==undefined));
     entries = rows.map(r=>({
       firma: r[0]||'', id: String(r[1]||'').trim(), typ: r[2]||'Rechnung',
