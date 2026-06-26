@@ -47,7 +47,7 @@ body {
   min-height: 100dvh;
 }
 
-/* -- LOGIN -- */
+/* ── LOGIN ── */
 #login-screen {
   min-height: 100dvh;
   display: flex; flex-direction: column;
@@ -90,7 +90,7 @@ body {
 .field-row input:focus { outline: none; border-color: var(--accent); }
 .field-hint { font-size: 10px; color: var(--text3); margin-top: .3rem; }
 
-/* -- APP -- */
+/* ── APP ── */
 #app { display: none; flex-direction: column; min-height: 100dvh; }
 
 .header {
@@ -283,20 +283,39 @@ body {
       </div>
       <div class="sort-bar">
         <span>Sortierung:</span>
-        <button class="sort-btn" id="sb-firma" onclick="setSort('firma')">Firma <span class="arrow"></span></button>
         <button class="sort-btn active" id="sb-nr" onclick="setSort('nr')">Nummer <span class="arrow">↓</span></button>
         <button class="sort-btn" id="sb-datum" onclick="setSort('datum')">Datum <span class="arrow"></span></button>
         <button class="sort-btn" id="sb-kunde" onclick="setSort('kunde')">Kunde <span class="arrow"></span></button>
         <button class="sort-btn" id="sb-betrag" onclick="setSort('betrag')">Betrag <span class="arrow"></span></button>
-        <button class="sort-btn" id="sb-status" onclick="setSort('status')">Status <span class="arrow"></span></button>
         <button class="sort-btn" id="sb-faellig" onclick="setSort('faellig')">Fälligkeit <span class="arrow"></span></button>
       </div>
-      <div style="display:flex;gap:6px;margin-bottom:.5rem;flex-wrap:wrap;align-items:center">
-        <span style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase">Firma:</span>
-        <button class="sort-btn active" id="ff-all" onclick="filterFirma('')">Alle</button>
-        <button class="sort-btn" id="ff-mat" onclick="filterFirma('MAKE A TEAM')">MAKE A TEAM</button>
-        <button class="sort-btn" id="ff-3ds" onclick="filterFirma('3DSOLX')">3DSOLX</button>
-        <button class="sort-btn" id="ff-mak" onclick="filterFirma('Maker Austria')">Maker Austria</button>
+      <div style="display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <label style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Firma</label>
+          <select id="search-firma" onchange="applySearch()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:var(--font-mono)">
+            <option value="">Alle</option>
+            <option value="MAKE A TEAM">MAKE A TEAM</option>
+            <option value="3DSOLX">3DSOLX</option>
+            <option value="Maker Austria">Maker Austria</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <label style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Re-Datum von</label>
+          <input type="date" id="search-datum-von" onchange="applySearch()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:var(--font-mono)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <label style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Re-Datum bis</label>
+          <input type="date" id="search-datum-bis" onchange="applySearch()" style="font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:var(--font-mono)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <label style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Betrag von</label>
+          <input type="number" id="search-betrag-von" onchange="applySearch()" step="0.01" placeholder="0,00" style="width:90px;font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:var(--font-mono)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <label style="font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Betrag bis</label>
+          <input type="number" id="search-betrag-bis" onchange="applySearch()" step="0.01" placeholder="0,00" style="width:90px;font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-family:var(--font-mono)">
+        </div>
+        <button class="btn btn-sm" onclick="clearSearch()" style="align-self:flex-end">✕ Reset</button>
       </div>
       <div id="filter-bar" style="display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap">
         <button class="btn btn-sm active-filter" onclick="filterInv('')" id="f-all">Alle</button>
@@ -304,7 +323,6 @@ body {
         <button class="btn btn-sm" onclick="filterInv('Erinnerung')" id="f-erin">Erinnerung</button>
         <button class="btn btn-sm" onclick="filterInv('Mahnung')" id="f-mahn">Mahnung</button>
         <button class="btn btn-sm" onclick="filterInv('Bezahlt')" id="f-bezahlt">Bezahlt</button>
-        <button class="btn btn-sm" onclick="filterInv('BetragFalsch')" id="f-betragfalsch" style="border-color:var(--red-border);color:var(--red)">⚠ Betrag Falsch</button>
       </div>
       <div id="inv-list"><div class="empty-state"><span class="empty-icon">📄</span><p>Keine Rechnungen geladen.</p></div></div>
     </div>
@@ -453,30 +471,9 @@ body {
               <option value="Storniert">Storniert</option>
             </select>
           </div>
-          <div style="font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem;grid-column:1/-1">Zahlungseingänge</div>
-          <div class="form-field">
-            <label>Datum 1</label>
-            <input type="date" id="sm-zahldatum1">
-          </div>
-          <div class="form-field">
-            <label>Betrag 1 €</label>
-            <input type="number" id="sm-bezahlt1" step="0.01" placeholder="0.00">
-          </div>
-          <div class="form-field">
-            <label>Datum 2</label>
-            <input type="date" id="sm-zahldatum2">
-          </div>
-          <div class="form-field">
-            <label>Betrag 2 €</label>
-            <input type="number" id="sm-bezahlt2" step="0.01" placeholder="0.00">
-          </div>
-          <div class="form-field">
-            <label>Datum 3</label>
-            <input type="date" id="sm-zahldatum3">
-          </div>
-          <div class="form-field">
-            <label>Betrag 3 €</label>
-            <input type="number" id="sm-bezahlt3" step="0.01" placeholder="0.00">
+          <div class="form-field full">
+            <label>Zahlungsdatum (bei Bezahlt)</label>
+            <input type="date" id="sm-zahldatum">
           </div>
           <div class="form-field full">
             <label>Notiz</label>
@@ -494,12 +491,12 @@ body {
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-// -- CONFIG --
+// ── CONFIG ──
 const GOOGLE_CLIENT_ID = '153450666140-bu77o2i7lkdb0racjdabk0ep8v2ps492.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets openid email profile';
 const SHEET_NAME = 'Rechnungen'; // Must match tab name in Google Sheet
 
-// -- STATE --
+// ── STATE ──
 let accessToken = null;
 let userInfo = null;
 let entries = [];
@@ -507,14 +504,14 @@ let editingRow = null;
 let sortField = 'nr';
 let sortDir = 'desc';
 
-// -- SETTINGS --
+// ── SETTINGS ──
 function gs(k,d){ return localStorage.getItem('invtrack_'+k)||d; }
 function ss(k,v){ localStorage.setItem('invtrack_'+k,v); }
 function getSheetId(){ return gs('sheetId',''); }
 function getDaysErin(){ return parseInt(gs('daysErin','7')); }
 function getDaysMahn(){ return parseInt(gs('daysMahn','21')); }
 
-// -- UTILS --
+// ── UTILS ──
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function today(){ return new Date().toISOString().slice(0,10); }
 function addDays(dateStr, n){
@@ -541,15 +538,6 @@ function toDE(dateStr){
     return d&&m&&y ? d+'.'+m+'.'+y : s;
   }
   return s;
-}
-
-function parseDE(s){
-  if(!s && s!==0) return 0;
-  if(typeof s==='number') return s;
-  const str = String(s).trim();
-  if(str.includes(',') && str.includes('.')) return parseFloat(str.split('.').join('').replace(',','.')) || 0;
-  if(str.includes(',')) return parseFloat(str.replace(',','.')) || 0;
-  return parseFloat(str) || 0;
 }
 
 function toISO(dateStr){
@@ -582,7 +570,7 @@ function computeStatus(e){
   return 'Offen';
 }
 
-// -- LOGIN --
+// ── LOGIN ──
 function startLogin(){
   const sheetId = document.getElementById('login-sheet-id').value.trim();
   if(sheetId) ss('sheetId', sheetId);
@@ -619,7 +607,7 @@ function logout(){
   document.getElementById('app').style.display='none';
 }
 
-// -- TABS --
+// ── TABS ──
 function showTab(tab){
   const tabs=['dashboard','rechnungen','angebote','mahnwesen','settings'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
@@ -627,20 +615,20 @@ function showTab(tab){
   document.getElementById('panel-'+tab).classList.add('active');
 }
 
-// -- SHEET SETUP --
+// ── SHEET SETUP ──
 async function ensureSheet(){
   // No headers needed - data starts at row 1
   return;
 }
 
-// -- LOAD ALL --
+// ── LOAD ALL ──
 async function loadAll(){
   const sheetId = getSheetId();
   if(!sheetId){ showSt('dash-status','⚠ Bitte zuerst Spreadsheet ID in Setup eintragen','warn'); return; }
   showSt('dash-status','<span class="spinner"></span> Daten werden geladen...','info');
   try{
     await ensureSheet();
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:S500')}?valueRenderOption=UNFORMATTED_VALUE`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:N500')}?valueRenderOption=UNFORMATTED_VALUE`;
     const r = await fetch(url, { headers: { 'Authorization': 'Bearer '+accessToken } });
     if(!r.ok) { const e=await r.json(); throw new Error('Laden fehlgeschlagen: '+e.error?.message); }
     const data = await r.json();
@@ -649,17 +637,10 @@ async function loadAll(){
       firma: r[0]||'', id: String(r[1]||'').trim(), typ: r[2]||'Rechnung',
       angebotNr: r[3]||'', nr: r[4]||'', datum: toISO(r[5]),
       faellig: toISO(r[6]), kunde: r[7]||'', beschreibung: r[8]||'',
-      zahltage: parseInt(r[9])||14,    // J
-      betrag: parseDE(r[10]),           // K
-      status: r[11]||'Offen',          // L
-      zahldatum1: toISO(r[12]),        // M
-      bezahlt1: parseDE(r[13]),        // N
-      zahldatum2: toISO(r[14]),        // O
-      bezahlt2: parseDE(r[15]),        // P
-      zahldatum3: toISO(r[16]),        // Q
-      bezahlt3: parseDE(r[17]),        // R
-      notiz: r[18]||'',               // S
-      erstellt: '', geaendert: ''    }));
+      betrag: parseFloat(r[9])||0, status: r[10]||'Offen',
+      zahldatum: toISO(r[11]), notiz: r[12]||'', erstellt: r[13]||'',
+      geaendert: r[14]||'', zahltage: parseInt(r[15])||14
+    }));
     document.getElementById('dash-status').innerHTML='';
     renderAll();
   }catch(e){
@@ -673,7 +654,7 @@ function renderAll(){
   renderAngebote();
 }
 
-// -- DASHBOARD --
+// ── DASHBOARD ──
 function renderDashboard(){
   const t = today();
   const rechnungen = entries.filter(e=>e.typ==='Rechnung'&&e.status!=='Bezahlt'&&e.status!=='Storniert');
@@ -703,25 +684,36 @@ function renderDashboard(){
   list.innerHTML = '<div class="card">'+actionNeeded.map(e=>invRow(e,true)).join('')+'</div>';
 }
 
-// -- RECHNUNGEN --
+// ── RECHNUNGEN ──
 let currentFilter = '';
 let firmaFilter = '';
 
-function filterFirma(f){
-  firmaFilter = f;
-  ['all','mat','3ds','mak'].forEach(k=>{
-    const btn = document.getElementById('ff-'+k);
-    if(btn) btn.classList.toggle('active', 
-      (f===''&&k==='all')||(f==='MAKE A TEAM'&&k==='mat')||(f==='3DSOLX'&&k==='3ds')||(f==='Maker Austria'&&k==='mak')
-    );
-  });
+function filterFirma(f){ firmaFilter = f; renderRechnungen(); renderAngebote(); }
+
+function applySearch(){ renderRechnungen(); }
+
+function clearSearch(){
+  document.getElementById('search-firma').value = '';
+  document.getElementById('search-datum-von').value = '';
+  document.getElementById('search-datum-bis').value = '';
+  document.getElementById('search-betrag-von').value = '';
+  document.getElementById('search-betrag-bis').value = '';
   renderRechnungen();
-  renderAngebote();
+}
+
+function getSearchFilters(){
+  return {
+    firma:    document.getElementById('search-firma')?.value || '',
+    datumVon: document.getElementById('search-datum-von')?.value || '',
+    datumBis: document.getElementById('search-datum-bis')?.value || '',
+    betragVon: parseFloat(document.getElementById('search-betrag-von')?.value) || null,
+    betragBis: parseFloat(document.getElementById('search-betrag-bis')?.value) || null,
+  };
 }
 function filterInv(f){
   currentFilter = f;
   document.querySelectorAll('#filter-bar .btn').forEach(b=>b.style.fontWeight='');
-  const map={'':'f-all','Offen':'f-offen','Erinnerung':'f-erin','Mahnung':'f-mahn','Bezahlt':'f-bezahlt','BetragFalsch':'f-betragfalsch'};
+  const map={'':'f-all','Offen':'f-offen','Erinnerung':'f-erin','Mahnung':'f-mahn','Bezahlt':'f-bezahlt'};
   if(map[f]) document.getElementById(map[f]).style.fontWeight='600';
   renderRechnungen();
 }
@@ -734,7 +726,7 @@ function setSort(field){
     sortDir = 'desc';
   }
   // Update button styles
-  const fields = ['firma','nr','datum','kunde','betrag','status','faellig'];
+  const fields = ['nr','datum','kunde','betrag','faellig'];
   fields.forEach(f => {
     const btn = document.getElementById('sb-'+f);
     if(!btn) return;
@@ -746,19 +738,17 @@ function setSort(field){
 }
 
 function renderRechnungen(){
+  const sf = getSearchFilters();
   let list = entries.filter(e=>e.typ==='Rechnung');
-  if(firmaFilter) list = list.filter(e=>e.firma===firmaFilter);
-  if(currentFilter === 'BetragFalsch') {
-    list = list.filter(e => {
-      const total = (e.bezahlt1||0)+(e.bezahlt2||0)+(e.bezahlt3||0);
-      return total > 0 && Math.abs(total - e.betrag) > 0.01;
-    });
-  } else if(currentFilter) {
-    list = list.filter(e=>{
-      const cs = computeStatus(e);
-      return cs===currentFilter || e.status===currentFilter;
-    });
-  }
+  if(sf.firma) list = list.filter(e=>e.firma===sf.firma);
+  if(sf.datumVon && sf.datumBis) list = list.filter(e=>e.datum>=sf.datumVon && e.datum<=sf.datumBis);
+  else if(sf.datumVon) list = list.filter(e=>e.datum===sf.datumVon);
+  if(sf.betragVon!==null && sf.betragBis!==null) list = list.filter(e=>e.betrag>=sf.betragVon && e.betrag<=sf.betragBis);
+  else if(sf.betragVon!==null) list = list.filter(e=>Math.abs(e.betrag-sf.betragVon)<0.01);
+  if(currentFilter) list = list.filter(e=>{
+    const cs = computeStatus(e);
+    return cs===currentFilter || e.status===currentFilter;
+  });
   list.sort((a,b)=>{
     let va = a[sortField]||'', vb = b[sortField]||'';
     if(sortField==='betrag') return sortDir==='asc' ? va-vb : vb-va;
@@ -792,14 +782,7 @@ function invRow(e, showUrgency){
   let dateInfo = `Re-Datum: ${toDE(e.datum)}`;
   if(e.faellig && e.typ==='Rechnung') dateInfo += ` · Fällig: ${toDE(e.faellig)}`;
   if(e.typ==='Rechnung' && e.status!=='Bezahlt' && overdueDays>0) dateInfo += ` · <span style="color:var(--red)">${overdueDays} Tage überfällig</span>`;
-  const totalBezahlt = (e.bezahlt1||0) + (e.bezahlt2||0) + (e.bezahlt3||0);
-  if(e.zahldatum1) dateInfo += ` · Zhlg.1: ${toDE(e.zahldatum1)}${e.bezahlt1?' '+fmtBetrag(e.bezahlt1)+' €':''}`;
-  if(e.zahldatum2) dateInfo += ` · Zhlg.2: ${toDE(e.zahldatum2)}${e.bezahlt2?' '+fmtBetrag(e.bezahlt2)+' €':''}`;
-  if(e.zahldatum3) dateInfo += ` · Zhlg.3: ${toDE(e.zahldatum3)}${e.bezahlt3?' '+fmtBetrag(e.bezahlt3)+' €':''}`;
-  if(totalBezahlt > 0 && Math.abs(totalBezahlt - e.betrag) > 0.01) {
-    const diff = (totalBezahlt - e.betrag);
-    dateInfo += ` · <span style="color:var(--red);font-weight:500">⚠ Total: ${fmtBetrag(totalBezahlt)} € (${diff>0?'+':''}${diff.toFixed(2).replace('.',',')} €)</span>`;
-  }
+  if(e.zahldatum) dateInfo += ` · Bezahlt: ${toDE(e.zahldatum)}`;
 
   return `<div class="inv-row ${urgencyClass}">
     <div class="inv-meta">
@@ -816,7 +799,7 @@ function invRow(e, showUrgency){
   </div>`;
 }
 
-// -- MAHNWESEN --
+// ── MAHNWESEN ──
 function runMahnCheck(){
   const t = today();
   const toErin = entries.filter(e=>{
@@ -873,7 +856,7 @@ function runMahnCheck(){
   document.getElementById('mahn-list').innerHTML=html;
 }
 
-// -- MODAL --
+// ── MODAL ──
 let modalMode = '';
 function openModal(mode){
   modalMode = mode;
@@ -918,7 +901,7 @@ async function saveEntry(){
     rechnungNr !== ''
   );
   if(dupCheck) { showSt('modal-status','⚠ Diese Nummer existiert bereits für '+firma,'warn'); return; }
-  const row = [firma, id, typ, angebotNr, rechnungNr, datum, faellig, kunde, beschreibung, zahltage, betrag, 'Offen', '', '', '', '', '', '', notiz];
+  const row = [firma, id, typ, angebotNr, rechnungNr, datum, faellig, kunde, beschreibung, betrag, 'Offen', '', notiz, now, now, zahltage];
 
   showSt('modal-status','<span class="spinner"></span> Wird gespeichert...','info');
   try{
@@ -949,7 +932,7 @@ async function saveEntry(){
   }
 }
 
-// -- STATUS MODAL --
+// ── STATUS MODAL ──
 let statusEntryId = null;
 function openStatusModal(id){
   statusEntryId = String(id).trim();
@@ -958,26 +941,16 @@ function openStatusModal(id){
   document.getElementById('status-modal').style.display='';
   document.getElementById('status-modal-info').innerHTML = `<strong>${esc(e.nr)} — ${esc(e.kunde)}</strong><br>€ ${fmtBetrag(e.betrag)} · Fällig: ${toDE(e.faellig)}`;
   document.getElementById('sm-status').value = e.status||'Offen';
-  document.getElementById('sm-zahldatum1').value = e.zahldatum1||e.zahldatum||'';
-  document.getElementById('sm-bezahlt1').value   = e.bezahlt1||'';
-  document.getElementById('sm-zahldatum2').value = e.zahldatum2||'';
-  document.getElementById('sm-bezahlt2').value   = e.bezahlt2||'';
-  document.getElementById('sm-zahldatum3').value = e.zahldatum3||'';
-  document.getElementById('sm-bezahlt3').value   = e.bezahlt3||'';
+  document.getElementById('sm-zahldatum').value = e.zahldatum||'';
   document.getElementById('sm-notiz').value = '';
 }
 function closeStatusModal(){ document.getElementById('status-modal').style.display='none'; }
 
 async function saveStatus(){
   const e = entries.find(x=>x.id===statusEntryId); if(!e) return;
-  const newStatus  = document.getElementById('sm-status').value;
-  const zahldatum1 = document.getElementById('sm-zahldatum1').value;
-  const bezahlt1   = parseFloat(document.getElementById('sm-bezahlt1').value)||0;
-  const zahldatum2 = document.getElementById('sm-zahldatum2').value;
-  const bezahlt2   = parseFloat(document.getElementById('sm-bezahlt2').value)||0;
-  const zahldatum3 = document.getElementById('sm-zahldatum3').value;
-  const bezahlt3   = parseFloat(document.getElementById('sm-bezahlt3').value)||0;
-  const notiz      = document.getElementById('sm-notiz').value;
+  const newStatus = document.getElementById('sm-status').value;
+  const zahldatum = document.getElementById('sm-zahldatum').value;
+  const notiz = document.getElementById('sm-notiz').value;
 
   try{
     const sheetId = getSheetId();
@@ -1001,14 +974,10 @@ async function saveStatus(){
     const sheetRow = rowIdx+1;
 
     const updates = [
-      {range:`${SHEET_NAME}!L${sheetRow}`, values:[[newStatus]]},             // L=Status
-      {range:`${SHEET_NAME}!M${sheetRow}`, values:[[zahldatum1]]},            // M=Datum1
-      {range:`${SHEET_NAME}!N${sheetRow}`, values:[[bezahlt1||'']]},          // N=Zahlung1
-      {range:`${SHEET_NAME}!O${sheetRow}`, values:[[zahldatum2]]},            // O=Datum2
-      {range:`${SHEET_NAME}!P${sheetRow}`, values:[[bezahlt2||'']]},          // P=Zahlung2
-      {range:`${SHEET_NAME}!Q${sheetRow}`, values:[[zahldatum3]]},            // Q=Datum3
-      {range:`${SHEET_NAME}!R${sheetRow}`, values:[[bezahlt3||'']]},          // R=Zahlung3
-      {range:`${SHEET_NAME}!S${sheetRow}`, values:[[notiz||e.notiz]]},        // S=Anmerkung
+      {range:`${SHEET_NAME}!K${sheetRow}`, values:[[newStatus]]},      // K=Status
+      {range:`${SHEET_NAME}!L${sheetRow}`, values:[[zahldatum]]},      // L=Zahlungsdatum
+      {range:`${SHEET_NAME}!M${sheetRow}`, values:[[notiz||e.notiz]]}, // M=Notiz
+      {range:`${SHEET_NAME}!O${sheetRow}`, values:[[today()]]},        // O=Geändert
     ];
     const wr = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
       method:'POST', headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
@@ -1022,7 +991,7 @@ async function saveStatus(){
   }
 }
 
-// -- CONVERT ANGEBOT → RECHNUNG --
+// ── CONVERT ANGEBOT → RECHNUNG ──
 async function convertToRechnung(id){
   const e = entries.find(x=>x.id===id); if(!e) return;
   const rechnungNr = prompt('Rechnungsnummer eingeben:', '');
@@ -1057,7 +1026,7 @@ async function convertToRechnung(id){
   }catch(err){ alert('Fehler: '+err.message); }
 }
 
-// -- SETTINGS --
+// ── SETTINGS ──
 function saveSettings(){
   ss('sheetId', document.getElementById('set-sheet-id').value.trim());
   ss('daysErin', document.getElementById('set-days-erin').value);
@@ -1071,7 +1040,7 @@ function updateSheetLink(){
     `<a href="https://docs.google.com/spreadsheets/d/${id}" target="_blank" style="color:var(--accent)">→ Sheet öffnen</a>` : '';
 }
 
-// -- STATUS HELPER --
+// ── STATUS HELPER ──
 function showSt(id, msg, type){
   const el = document.getElementById(id); if(!el) return;
   el.innerHTML = `<div class="status-bar ${type}">${msg}</div>`;
