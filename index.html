@@ -47,7 +47,7 @@ body {
   min-height: 100dvh;
 }
 
-/* ── LOGIN ── */
+/* -- LOGIN -- */
 #login-screen {
   min-height: 100dvh;
   display: flex; flex-direction: column;
@@ -90,7 +90,7 @@ body {
 .field-row input:focus { outline: none; border-color: var(--accent); }
 .field-hint { font-size: 10px; color: var(--text3); margin-top: .3rem; }
 
-/* ── APP ── */
+/* -- APP -- */
 #app { display: none; flex-direction: column; min-height: 100dvh; }
 
 .header {
@@ -494,12 +494,12 @@ body {
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-// ── CONFIG ──
+// -- CONFIG --
 const GOOGLE_CLIENT_ID = '153450666140-bu77o2i7lkdb0racjdabk0ep8v2ps492.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets openid email profile';
 const SHEET_NAME = 'Rechnungen'; // Must match tab name in Google Sheet
 
-// ── STATE ──
+// -- STATE --
 let accessToken = null;
 let userInfo = null;
 let entries = [];
@@ -507,14 +507,14 @@ let editingRow = null;
 let sortField = 'nr';
 let sortDir = 'desc';
 
-// ── SETTINGS ──
+// -- SETTINGS --
 function gs(k,d){ return localStorage.getItem('invtrack_'+k)||d; }
 function ss(k,v){ localStorage.setItem('invtrack_'+k,v); }
 function getSheetId(){ return gs('sheetId',''); }
 function getDaysErin(){ return parseInt(gs('daysErin','7')); }
 function getDaysMahn(){ return parseInt(gs('daysMahn','21')); }
 
-// ── UTILS ──
+// -- UTILS --
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function today(){ return new Date().toISOString().slice(0,10); }
 function addDays(dateStr, n){
@@ -582,7 +582,7 @@ function computeStatus(e){
   return 'Offen';
 }
 
-// ── LOGIN ──
+// -- LOGIN --
 function startLogin(){
   const sheetId = document.getElementById('login-sheet-id').value.trim();
   if(sheetId) ss('sheetId', sheetId);
@@ -619,7 +619,7 @@ function logout(){
   document.getElementById('app').style.display='none';
 }
 
-// ── TABS ──
+// -- TABS --
 function showTab(tab){
   const tabs=['dashboard','rechnungen','angebote','mahnwesen','settings'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
@@ -627,13 +627,13 @@ function showTab(tab){
   document.getElementById('panel-'+tab).classList.add('active');
 }
 
-// ── SHEET SETUP ──
+// -- SHEET SETUP --
 async function ensureSheet(){
   // No headers needed - data starts at row 1
   return;
 }
 
-// ── LOAD ALL ──
+// -- LOAD ALL --
 async function loadAll(){
   const sheetId = getSheetId();
   if(!sheetId){ showSt('dash-status','⚠ Bitte zuerst Spreadsheet ID in Setup eintragen','warn'); return; }
@@ -649,18 +649,17 @@ async function loadAll(){
       firma: r[0]||'', id: String(r[1]||'').trim(), typ: r[2]||'Rechnung',
       angebotNr: r[3]||'', nr: r[4]||'', datum: toISO(r[5]),
       faellig: toISO(r[6]), kunde: r[7]||'', beschreibung: r[8]||'',
-      zahltage: parseInt(r[9])||14,               // J
-      betrag: parseDE(r[10])||0,                // K
-      status: r[11]||'Offen',                      // L
-      zahldatum1: toISO(r[12]),                          // M
-      bezahlt1: parseDE(r[13])||0,              // N
-      zahldatum2: toISO(r[14]),                    // O
-      bezahlt2: parseDE(r[15])||0,              // P
-      zahldatum3: toISO(r[16]),                    // Q
-      bezahlt3: parseDE(r[17])||0,              // R
-      notiz: r[18]||'',                            // S
-      erstellt: r[19]||'', geaendert: r[20]||''
-    }));
+      zahltage: parseInt(r[9])||14,    // J
+      betrag: parseDE(r[10]),           // K
+      status: r[11]||'Offen',          // L
+      zahldatum1: toISO(r[12]),        // M
+      bezahlt1: parseDE(r[13]),        // N
+      zahldatum2: toISO(r[14]),        // O
+      bezahlt2: parseDE(r[15]),        // P
+      zahldatum3: toISO(r[16]),        // Q
+      bezahlt3: parseDE(r[17]),        // R
+      notiz: r[18]||'',               // S
+      erstellt: '', geaendert: ''    }));
     document.getElementById('dash-status').innerHTML='';
     renderAll();
   }catch(e){
@@ -674,7 +673,7 @@ function renderAll(){
   renderAngebote();
 }
 
-// ── DASHBOARD ──
+// -- DASHBOARD --
 function renderDashboard(){
   const t = today();
   const rechnungen = entries.filter(e=>e.typ==='Rechnung'&&e.status!=='Bezahlt'&&e.status!=='Storniert');
@@ -704,7 +703,7 @@ function renderDashboard(){
   list.innerHTML = '<div class="card">'+actionNeeded.map(e=>invRow(e,true)).join('')+'</div>';
 }
 
-// ── RECHNUNGEN ──
+// -- RECHNUNGEN --
 let currentFilter = '';
 let firmaFilter = '';
 
@@ -817,7 +816,7 @@ function invRow(e, showUrgency){
   </div>`;
 }
 
-// ── MAHNWESEN ──
+// -- MAHNWESEN --
 function runMahnCheck(){
   const t = today();
   const toErin = entries.filter(e=>{
@@ -874,7 +873,7 @@ function runMahnCheck(){
   document.getElementById('mahn-list').innerHTML=html;
 }
 
-// ── MODAL ──
+// -- MODAL --
 let modalMode = '';
 function openModal(mode){
   modalMode = mode;
@@ -950,7 +949,7 @@ async function saveEntry(){
   }
 }
 
-// ── STATUS MODAL ──
+// -- STATUS MODAL --
 let statusEntryId = null;
 function openStatusModal(id){
   statusEntryId = String(id).trim();
@@ -1004,12 +1003,12 @@ async function saveStatus(){
     const updates = [
       {range:`${SHEET_NAME}!L${sheetRow}`, values:[[newStatus]]},             // L=Status
       {range:`${SHEET_NAME}!M${sheetRow}`, values:[[zahldatum1]]},            // M=Datum1
-      {range:`${SHEET_NAME}!N${sheetRow}`, values:[[bezahlt1||'']]},          // N=Betrag1
+      {range:`${SHEET_NAME}!N${sheetRow}`, values:[[bezahlt1||'']]},          // N=Zahlung1
       {range:`${SHEET_NAME}!O${sheetRow}`, values:[[zahldatum2]]},            // O=Datum2
-      {range:`${SHEET_NAME}!P${sheetRow}`, values:[[bezahlt2||'']]},          // P=Betrag2
+      {range:`${SHEET_NAME}!P${sheetRow}`, values:[[bezahlt2||'']]},          // P=Zahlung2
       {range:`${SHEET_NAME}!Q${sheetRow}`, values:[[zahldatum3]]},            // Q=Datum3
-      {range:`${SHEET_NAME}!R${sheetRow}`, values:[[bezahlt3||'']]},          // R=Betrag3
-      {range:`${SHEET_NAME}!S${sheetRow}`, values:[[notiz||e.notiz]]},        // S=Notiz
+      {range:`${SHEET_NAME}!R${sheetRow}`, values:[[bezahlt3||'']]},          // R=Zahlung3
+      {range:`${SHEET_NAME}!S${sheetRow}`, values:[[notiz||e.notiz]]},        // S=Anmerkung
     ];
     const wr = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
       method:'POST', headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
@@ -1023,7 +1022,7 @@ async function saveStatus(){
   }
 }
 
-// ── CONVERT ANGEBOT → RECHNUNG ──
+// -- CONVERT ANGEBOT → RECHNUNG --
 async function convertToRechnung(id){
   const e = entries.find(x=>x.id===id); if(!e) return;
   const rechnungNr = prompt('Rechnungsnummer eingeben:', '');
@@ -1058,7 +1057,7 @@ async function convertToRechnung(id){
   }catch(err){ alert('Fehler: '+err.message); }
 }
 
-// ── SETTINGS ──
+// -- SETTINGS --
 function saveSettings(){
   ss('sheetId', document.getElementById('set-sheet-id').value.trim());
   ss('daysErin', document.getElementById('set-days-erin').value);
@@ -1072,7 +1071,7 @@ function updateSheetLink(){
     `<a href="https://docs.google.com/spreadsheets/d/${id}" target="_blank" style="color:var(--accent)">→ Sheet öffnen</a>` : '';
 }
 
-// ── STATUS HELPER ──
+// -- STATUS HELPER --
 function showSt(id, msg, type){
   const el = document.getElementById(id); if(!el) return;
   el.innerHTML = `<div class="status-bar ${type}">${msg}</div>`;
