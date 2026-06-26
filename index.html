@@ -498,7 +498,7 @@ body {
           </div>
           <div class="form-field full">
             <label>Notiz</label>
-            <input type="text" id="sm-notiz" placeholder="z.B. Zahlung eingegangen">
+            <textarea id="sm-notiz" rows="3" placeholder="z.B. Zahlung eingegangen" style="resize:vertical"></textarea>
           </div>
         </div>
       </div>
@@ -1004,7 +1004,7 @@ function openStatusModal(id){
   document.getElementById('sm-bezahlt2').value   = e.bezahlt2||'';
   document.getElementById('sm-zahldatum3').value = e.zahldatum3||'';
   document.getElementById('sm-bezahlt3').value   = e.bezahlt3||'';
-  document.getElementById('sm-notiz').value = '';
+  document.getElementById('sm-notiz').value = e.notiz||'';
 }
 function closeStatusModal(){ document.getElementById('status-modal').style.display='none'; }
 
