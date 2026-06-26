@@ -788,10 +788,17 @@ function renderRechnungen(){
   else if(sf.datumVon) list = list.filter(e=>e.datum===sf.datumVon);
   if(sf.betragVon!==null && sf.betragBis!==null) list = list.filter(e=>e.betrag>=sf.betragVon && e.betrag<=sf.betragBis);
   else if(sf.betragVon!==null) list = list.filter(e=>Math.abs(e.betrag-sf.betragVon)<0.01);
-  if(currentFilter) list = list.filter(e=>{
-    const cs = computeStatus(e);
-    return cs===currentFilter || e.status===currentFilter;
-  });
+  if(currentFilter==='BetragFalsch'){
+    list = list.filter(e=>{
+      const total=(e.bezahlt1||0)+(e.bezahlt2||0)+(e.bezahlt3||0);
+      return total>0 && Math.abs(total-e.betrag)>0.01;
+    });
+  } else if(currentFilter){
+    list = list.filter(e=>{
+      const cs = computeStatus(e);
+      return cs===currentFilter || e.status===currentFilter;
+    });
+  }
   list.sort((a,b)=>{
     let va = a[sortField]||'', vb = b[sortField]||'';
     if(sortField==='betrag') return sortDir==='asc' ? va-vb : vb-va;
