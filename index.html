@@ -640,7 +640,7 @@ async function loadAll(){
   showSt('dash-status','<span class="spinner"></span> Daten werden geladen...','info');
   try{
     await ensureSheet();
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:N500')}?valueRenderOption=UNFORMATTED_VALUE`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_NAME+'!A1:S500')}?valueRenderOption=UNFORMATTED_VALUE`;
     const r = await fetch(url, { headers: { 'Authorization': 'Bearer '+accessToken } });
     if(!r.ok) { const e=await r.json(); throw new Error('Laden fehlgeschlagen: '+e.error?.message); }
     const data = await r.json();
